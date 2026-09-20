@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yaeda"
+version = "0.1.0"
+description = "Yet Another EDA - Tabular Feature Discovery, Interaction Analysis, and Error Diagnostics."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Rafael Cunha", email = "rnascunha@gmail.com" }]
+keywords = [
+  "eda",
+  "tabular",
+  "machine-learning",
+  "feature-engineering",
+  "kaggle",
+  "shap",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "pandas>=2.0.0",
+  "numpy>=1.24.0",
+  "scipy>=1.10.0",
+  "scikit-learn>=1.3.0",
+  "matplotlib>=3.7.0",
+  "seaborn>=0.12.0",
+]
+
+[project.optional-dependencies]
+shap = ["shap>=0.42.0"]
+pdf = ["weasyprint>=60.0"]
+all = ["shap>=0.42.0", "weasyprint>=60.0"]
+dev = ["pytest>=7.4.0", "pytest-cov>=4.1.0", "ruff>=0.4.0"]
+
+[project.urls]
+Homepage = "https://github.com/your-username/yaEDA"
+Repository = "https://github.com/your-username/yaEDA"
+Issues = "https://github.com/your-username/yaEDA/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/yaeda"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+ignore = [
+  "I001",   # Ban/ignore isort import sorting checks,
+  "BLE001", # Ignore base Exception class
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra -q --strict-markers"
