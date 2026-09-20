@@ -1,4 +1,3 @@
-import numpy as np
 from yaeda.model_diagnostics import (
     ModelDiagnosticsAnalyzer,
     ModelDiagnosticsCall,
@@ -22,7 +21,7 @@ def test_model_diagnostics_inputs_initialization(fitted_binary_model):
 
 
 def test_model_diagnostics_analyzer_classification(classification_df, fitted_binary_model):
-    model, y_pred, y_prob = fitted_binary_model
+    model, _y_pred, y_prob = fitted_binary_model
     y_true = classification_df["target"].to_numpy()
 
     # Introduce exactly 12 misclassifications on the 250 rows
@@ -113,7 +112,7 @@ def test_model_diagnostics_call_multi_model(classification_df, fitted_binary_mod
 
 
 def test_model_diagnostics_to_dict_serialization(classification_df, fitted_binary_model):
-    model, y_pred, y_prob = fitted_binary_model
+    _model, y_pred, y_prob = fitted_binary_model
 
     inputs = ModelDiagnosticsInputs(predictions=y_pred, probabilities=y_prob, name="ModelDict")
     analyzer = ModelDiagnosticsAnalyzer(

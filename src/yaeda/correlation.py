@@ -73,17 +73,13 @@ class FeatureTargetAnalyzer:
     def _infer_target_type(
         self, target_series: pd.Series
     ) -> Literal["classification", "regression"]:
-        is_num = pd.api.types.is_numeric_dtype(
+        is_num = pd.api.types.is_numeric_dtype(target_series) and not pd.api.types.is_bool_dtype(
             target_series
-        ) and not pd.api.types.is_bool_dtype(target_series)
+        )
         unique_count = target_series.nunique()
 
         # Categorical, boolean, or few unique integers imply classification
-        if (
-            not is_num
-            or unique_count <= 10
-            or pd.api.types.is_bool_dtype(target_series)
-        ):
+        if not is_num or unique_count <= 10 or pd.api.types.is_bool_dtype(target_series):
             return "classification"
         return "regression"
 
@@ -107,9 +103,9 @@ class FeatureTargetAnalyzer:
 
         target_stats: dict[str, dict[str, float]] = {}
         target_s = self.df[self.target]
-        is_num_target = pd.api.types.is_numeric_dtype(
+        is_num_target = pd.api.types.is_numeric_dtype(target_s) and not pd.api.types.is_bool_dtype(
             target_s
-        ) and not pd.api.types.is_bool_dtype(target_s)
+        )
         is_binary = target_s.nunique() == 2
 
         clean_target = None
@@ -117,9 +113,7 @@ class FeatureTargetAnalyzer:
             clean_target = target_s.astype(float)
         elif is_binary:
             # Point-biserial correlation: factorize binary target to 0.0 and 1.0
-            clean_target = pd.Series(
-                pd.factorize(target_s)[0], index=self.df.index, dtype=float
-            )
+            clean_target = pd.Series(pd.factorize(target_s)[0], index=self.df.index, dtype=float)
         elif is_num_target:
             clean_target = target_s.astype(float)
 
@@ -141,7 +135,7 @@ class FeatureTargetAnalyzer:
                         "spearman_corr": round(float(r_s), 4),
                         "spearman_p_value": round(float(p_val_s), 6),
                     }
-                except Exception:  # noqa: BLE001, S110
+                except Exception:  # noqa: S110
                     pass
 
         return pearson_mat, spearman_mat, target_stats
@@ -187,10 +181,7 @@ class FeatureTargetAnalyzer:
                 random_state=self.random_state,
             )
 
-        return {
-            feat: round(float(score), 4)
-            for feat, score in zip(self.features, mi_scores)
-        }
+        return {feat: round(float(score), 4) for feat, score in zip(self.features, mi_scores)}
 
     def _extract_collinear_pairs(
         self, pearson_mat: pd.DataFrame, spearman_mat: pd.DataFrame
@@ -204,10 +195,7 @@ class FeatureTargetAnalyzer:
             for j in range(i + 1, len(cols)):
                 p_r = pearson_mat.iloc[i, j]
                 s_r = spearman_mat.iloc[i, j]
-                if (
-                    abs(p_r) >= self.collinear_threshold
-                    or abs(s_r) >= self.collinear_threshold
-                ):
+                if abs(p_r) >= self.collinear_threshold or abs(s_r) >= self.collinear_threshold:
                     collinear_pairs.append(
                         CollinearPair(
                             feature_a=cols[i],

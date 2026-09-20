@@ -85,14 +85,10 @@ class FeatureImportanceAnalyzer:
     def _infer_target_type(
         self, target_series: pd.Series
     ) -> Literal["classification", "regression"]:
-        is_num = pd.api.types.is_numeric_dtype(
+        is_num = pd.api.types.is_numeric_dtype(target_series) and not pd.api.types.is_bool_dtype(
             target_series
-        ) and not pd.api.types.is_bool_dtype(target_series)
-        if (
-            not is_num
-            or target_series.nunique() <= 10
-            or pd.api.types.is_bool_dtype(target_series)
-        ):
+        )
+        if not is_num or target_series.nunique() <= 10 or pd.api.types.is_bool_dtype(target_series):
             return "classification"
         return "regression"
 
@@ -108,8 +104,7 @@ class FeatureImportanceAnalyzer:
         num_cols = [
             c
             for c in self.features
-            if pd.api.types.is_numeric_dtype(X_df[c])
-            and not pd.api.types.is_bool_dtype(X_df[c])
+            if pd.api.types.is_numeric_dtype(X_df[c]) and not pd.api.types.is_bool_dtype(X_df[c])
         ]
         cat_cols = [c for c in self.features if c not in num_cols]
 
@@ -125,9 +120,7 @@ class FeatureImportanceAnalyzer:
         if cat_cols:
             cat_imputer = SimpleImputer(strategy="constant", fill_value="__MISSING__")
             cat_imputed = cat_imputer.fit_transform(X_df[cat_cols].astype(str))
-            encoder = OrdinalEncoder(
-                handle_unknown="use_encoded_value", unknown_value=-1
-            )
+            encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
             cat_encoded = encoder.fit_transform(cat_imputed)
             processed_parts.append(cat_encoded)
             ordered_feature_names.extend(cat_cols)
@@ -153,9 +146,7 @@ class FeatureImportanceAnalyzer:
         model.fit(X_train, y_train)
         return model
 
-    def _compute_attributions(
-        self, model: Any, X: np.ndarray
-    ) -> tuple[np.ndarray, str]:
+    def _compute_attributions(self, model: Any, X: np.ndarray) -> tuple[np.ndarray, str]:
         if HAS_SHAP:
             explainer = shap.TreeExplainer(model)
             sample_size = min(len(X), self.shap_sample_limit)
@@ -165,17 +156,13 @@ class FeatureImportanceAnalyzer:
             shap_values = explainer.shap_values(X[sample_idx])
 
             if isinstance(shap_values, list):
-                attribution = np.mean(
-                    [np.abs(c).mean(axis=0) for c in shap_values], axis=0
-                )
+                attribution = np.mean([np.abs(c).mean(axis=0) for c in shap_values], axis=0)
             elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
                 attribution = np.abs(shap_values).mean(axis=(0, 2))
             else:
                 vals = getattr(shap_values, "values", shap_values)
                 attribution = (
-                    np.abs(vals).mean(axis=(0, 2))
-                    if vals.ndim == 3
-                    else np.abs(vals).mean(axis=0)
+                    np.abs(vals).mean(axis=(0, 2)) if vals.ndim == 3 else np.abs(vals).mean(axis=0)
                 )
 
             return attribution, "SHAP (mean |value|)"
@@ -189,7 +176,7 @@ class FeatureImportanceAnalyzer:
                         model, X_sub, features=[feat_idx], grid_resolution=15
                     )
                     variances.append(float(np.var(pdp_res["average"])))
-                except Exception:  # noqa: BLE001
+                except Exception:
                     variances.append(0.0)
             return np.array(variances), "PDP Sensitivity Variance"
 
@@ -201,8 +188,7 @@ class FeatureImportanceAnalyzer:
         else:
             stratify = (
                 y
-                if self.target_type == "classification"
-                and pd.Series(y).value_counts().min() > 1
+                if self.target_type == "classification" and pd.Series(y).value_counts().min() > 1
                 else None
             )
             X_train, X_val, y_train, y_val = train_test_split(
@@ -217,9 +203,7 @@ class FeatureImportanceAnalyzer:
         tree_mdi = model.feature_importances_
 
         scoring = (
-            "roc_auc"
-            if (self.target_type == "classification" and len(np.unique(y)) == 2)
-            else None
+            "roc_auc" if (self.target_type == "classification" and len(np.unique(y)) == 2) else None
         )
         perm_res = permutation_importance(
             model,
@@ -251,27 +235,16 @@ class FeatureImportanceAnalyzer:
             )
 
             if self.target_type == "classification":
-                mi_vals = mutual_info_classif(
-                    X_train, y_train, random_state=self.random_state
-                )
+                mi_vals = mutual_info_classif(X_train, y_train, random_state=self.random_state)
             else:
-                mi_vals = mutual_info_regression(
-                    X_train, y_train, random_state=self.random_state
-                )
-            mi_dict = {
-                feat: float(score) for feat, score in zip(ordered_features, mi_vals)
-            }
+                mi_vals = mutual_info_regression(X_train, y_train, random_state=self.random_state)
+            mi_dict = {feat: float(score) for feat, score in zip(ordered_features, mi_vals)}
             self.mi_scores = mi_dict
 
         mi_array = np.array([mi_dict.get(f, 0.0) for f in ordered_features])
         norm_mi = normalize(mi_array)
 
-        composite = (
-            (0.35 * norm_attr)
-            + (0.35 * norm_perm)
-            + (0.15 * norm_mi)
-            + (0.15 * norm_tree)
-        )
+        composite = (0.35 * norm_attr) + (0.35 * norm_perm) + (0.15 * norm_mi) + (0.15 * norm_tree)
 
         records: list[FeatureImportanceMetric] = []
         for i, feat in enumerate(ordered_features):
@@ -282,9 +255,7 @@ class FeatureImportanceAnalyzer:
                 else (
                     "Tier 2: Strong"
                     if score >= 0.40
-                    else (
-                        "Tier 3: Moderate" if score >= 0.15 else "Tier 4: Noise / Low"
-                    )
+                    else ("Tier 3: Moderate" if score >= 0.15 else "Tier 4: Noise / Low")
                 )
             )
             rec = (
@@ -293,11 +264,7 @@ class FeatureImportanceAnalyzer:
                 else (
                     "Secondary Predictor"
                     if score >= 0.40
-                    else (
-                        "Auxiliary Predictor"
-                        if score >= 0.15
-                        else "Candidate for pruning"
-                    )
+                    else ("Auxiliary Predictor" if score >= 0.15 else "Candidate for pruning")
                 )
             )
 

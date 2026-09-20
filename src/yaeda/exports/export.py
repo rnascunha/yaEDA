@@ -42,7 +42,7 @@ class StructuredDataExporter:
 
         payload = {
             "metadata": {
-                "generated_at": datetime.datetime.now().isoformat(),
+                "generated_at": datetime.datetime.now().isoformat(),  # noqa: DTZ005
                 "n_rows": self.tp.n_rows,
                 "n_columns": self.tp.n_columns,
                 "target_column": self.tp.target_column,

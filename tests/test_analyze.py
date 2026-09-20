@@ -62,7 +62,7 @@ def test_analyze_end_to_end_classification_with_options(
 
     # 5. Verify JSON export
     json_file = tmp_path / "metadata.json"
-    json_payload = eda.to_json(output=json_file)
+    _json_payload = eda.to_json(output=json_file)
 
     assert json_file.exists()
     with open(json_file, "r", encoding="utf-8") as f:
