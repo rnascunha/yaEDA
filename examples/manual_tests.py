@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Manual verification script for yaEDA exports across multiple execution modes.
 
 Executes TabularEDA across 4 scenarios:

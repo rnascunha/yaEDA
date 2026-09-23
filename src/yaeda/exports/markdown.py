@@ -20,7 +20,7 @@ class EDAMarkdownReportBuilder:
 
     def generate(self, output_path: Path | str | None = None) -> str:
         lines = []
-        gen_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        gen_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # noqa: DTZ005
 
         target_label = self.tp.target_column or "None (Unsupervised / Test Exploration)"
         task_label = (

@@ -1,4 +1,3 @@
-import pandas as pd
 from yaeda.charts import EDAChartGenerator
 
 

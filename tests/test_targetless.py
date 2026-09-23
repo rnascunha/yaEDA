@@ -1,4 +1,3 @@
-import pandas as pd
 from yaeda import TabularEDA
 from yaeda.correlation import FeatureTargetAnalyzer
 from yaeda.clustering import TabularClusterAnalyzer
