@@ -21,7 +21,7 @@ BASE_INPUT_DIR_PATH = Path("./artifacts/data/")
 TRAIN_CSV_PATH = BASE_INPUT_DIR_PATH / "train.csv"
 TEST_CSV_PATH = BASE_INPUT_DIR_PATH / "test.csv"
 TARGET_COL = "Will_Buy_EV"
-OUTPUT_DIR = Path("./artifacts/data/")
+OUTPUT_DIR = Path("./artifacts/exports/")
 
 # If True and the files above are not found, creates synthetic sample files to run
 CREATE_SAMPLE_DATA_IF_MISSING = True

@@ -1,11 +1,11 @@
 ## Package
 
-- README.md
-  - Highlight that is a in development library
-  - Add screenshots
-  - Add links to HTML/JSON output
+- ~~README.md~~
+  - ~~Highlight that is a in development library~~
+  - ~~Add screenshots~~
+  - ~~Add links to HTML/JSON output~~
   - Say that it can take time
-- Add examples
+- ~~Add examples~~
 
 ## UI
 
@@ -22,7 +22,7 @@
 - Show table on html. Must be in a smart way, loading as need as data can be huge (can this be done in a standalone way?)
 - Add/configure metadata:
   - Name
-  - Date run
+  - ~~Date run~~
 - Logging
 
 ## Bugs
