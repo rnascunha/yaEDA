@@ -4,10 +4,9 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
-from sklearn.inspection import permutation_importance
+from sklearn.inspection import partial_dependence, permutation_importance
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.inspection import partial_dependence
 
 try:
     import shap
@@ -34,8 +33,8 @@ class FeatureImportanceMetric:
 
 @dataclass
 class FeatureImportanceReport:
-    target: str
-    target_type: Literal["classification", "regression"]
+    target: str | None
+    target_type: Literal["classification", "regression"] | None
     model_type: str
     attribution_method: str = "SHAP (mean |value|)"
     importances: list[FeatureImportanceMetric] = field(default_factory=list)
@@ -44,6 +43,8 @@ class FeatureImportanceReport:
     feature_names: list[str] = field(default_factory=list)
 
     def to_dataframe(self) -> pd.DataFrame:
+        if not self.importances:
+            return pd.DataFrame()
         data = [asdict(item) for item in self.importances]
         return pd.DataFrame(data).set_index("rank")
 
@@ -57,7 +58,7 @@ class FeatureImportanceAnalyzer:
     def __init__(
         self,
         df: pd.DataFrame,
-        target: str,
+        target: str | None = None,
         features: list[str] | None = None,
         target_type: Literal["classification", "regression"] | None = None,
         mi_scores: dict[str, float] | None = None,
@@ -65,7 +66,7 @@ class FeatureImportanceAnalyzer:
         shap_sample_limit: int = 500,
         random_state: int = 42,
     ):
-        if target not in df.columns:
+        if target is not None and target not in df.columns:
             raise ValueError(f"Target column '{target}' not in DataFrame.")
 
         self.target = target
@@ -79,8 +80,12 @@ class FeatureImportanceAnalyzer:
         else:
             self.features = [col for col in df.columns if col != target]
 
-        self.df = df[self.features + [self.target]].dropna(subset=[self.target]).copy()
-        self.target_type = target_type or self._infer_target_type(self.df[self.target])
+        if self.target is not None:
+            self.df = df[self.features + [self.target]].dropna(subset=[self.target]).copy()
+            self.target_type = target_type or self._infer_target_type(self.df[self.target])
+        else:
+            self.df = df[self.features].copy()
+            self.target_type = None
 
     def _infer_target_type(
         self, target_series: pd.Series
@@ -181,6 +186,18 @@ class FeatureImportanceAnalyzer:
             return np.array(variances), "PDP Sensitivity Variance"
 
     def run(self) -> FeatureImportanceReport:
+        if self.target is None or self.target not in self.df.columns:
+            return FeatureImportanceReport(
+                target=None,
+                target_type=None,
+                model_type="None",
+                attribution_method="None",
+                importances=[],
+                fitted_model=None,
+                preprocessed_X=None,
+                feature_names=self.features,
+            )
+
         X, y, ordered_features = self._preprocess_data()
 
         if len(y) < 20:
@@ -192,11 +209,7 @@ class FeatureImportanceAnalyzer:
                 else None
             )
             X_train, X_val, y_train, y_val = train_test_split(
-                X,
-                y,
-                test_size=self.test_size,
-                random_state=self.random_state,
-                stratify=stratify,
+                X, y, test_size=self.test_size, random_state=self.random_state, stratify=stratify
             )
 
         model = self._fit_model(X_train, y_train)
@@ -229,10 +242,7 @@ class FeatureImportanceAnalyzer:
 
         mi_dict = getattr(self, "mi_scores", None)
         if not mi_dict:
-            from sklearn.feature_selection import (
-                mutual_info_classif,
-                mutual_info_regression,
-            )
+            from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 
             if self.target_type == "classification":
                 mi_vals = mutual_info_classif(X_train, y_train, random_state=self.random_state)

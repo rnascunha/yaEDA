@@ -24,6 +24,7 @@ class EDAChartGenerator:
                 "figure.autolayout": False,
             }
         )
+        self.dataset_palette = ["#2563eb", "#d97706", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4"]
 
     def _fig_to_base64(self, fig: plt.Figure) -> str:
         buf = io.BytesIO()
@@ -34,7 +35,6 @@ class EDAChartGenerator:
         return b64
 
     def plot_golden_features(self, importances: list[Any], top_n: int = 10) -> str:
-        """Horizontal dual-bar chart comparing Golden Score and Generalization Permutation drop."""
         records = importances[:top_n][::-1]
         if not records:
             return ""
@@ -230,12 +230,7 @@ class EDAChartGenerator:
                 )
 
         plt.tight_layout()
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", bbox_inches="tight", dpi=160)
-        buf.seek(0)
-        b64 = base64.b64encode(buf.read()).decode("utf-8")
-        plt.close(fig)
-        return b64
+        return self._fig_to_base64(fig)
 
     def plot_correlation_heatmap(
         self, corr_matrix: dict[str, dict[str, float]], max_feats: int = 12
@@ -307,6 +302,218 @@ class EDAChartGenerator:
 
         return self._fig_to_base64(fig)
 
+    def plot_feature_distribution_comparison(
+        self,
+        datasets: dict[str, pd.DataFrame],
+        feature: str,
+        is_numeric: bool = True,
+    ) -> str:
+        """
+        Renders a full-width comparative chart of a feature across multiple datasets:
+          - Numeric: Overlaid KDE density curves and semi-transparent step histograms with mean/std markers.
+          - Categorical: Grouped percentage bar chart with [UNSEEN] callouts for test-set novel levels.
+        """
+        valid_dfs = {
+            name: df[feature].dropna()
+            for name, df in datasets.items()
+            if feature in df.columns and not df[feature].dropna().empty
+        }
+        if not valid_dfs:
+            return ""
+
+        colors = {
+            name: self.dataset_palette[i % len(self.dataset_palette)]
+            for i, name in enumerate(valid_dfs.keys())
+        }
+        fig, ax = plt.subplots(figsize=(8.8, 3.4))
+
+        if is_numeric:
+            all_unique = set()
+            zero_vars = True
+            for s in valid_dfs.values():
+                all_unique.update(s.unique()[:25])
+                if s.std() > 1e-6:
+                    zero_vars = False
+            is_discrete = (len(all_unique) <= 10) or zero_vars
+
+            if is_discrete:
+                prop_data = []
+                for name, s in valid_dfs.items():
+                    vc = s.value_counts(normalize=True) * 100
+                    for val, pct in vc.items():
+                        prop_data.append({"Dataset": name, "Value": str(val), "Percentage": pct})
+                pdf = pd.DataFrame(prop_data)
+                sns.barplot(
+                    data=pdf, x="Value", y="Percentage", hue="Dataset", palette=colors, ax=ax
+                )
+                ax.set_title(
+                    f"Comparative Distribution (Discrete): {feature}",
+                    fontsize=10,
+                    fontweight="bold",
+                )
+                ax.set_ylabel("Percentage (%)", fontsize=8.5)
+                if len(all_unique) > 5:
+                    ax.tick_params(axis="x", rotation=30)
+            else:
+                for name, s in valid_dfs.items():
+                    m_val, s_val = float(s.mean()), float(s.std())
+                    lbl = f"{name} (μ={m_val:.2g}, σ={s_val:.2g})"
+                    try:
+                        sns.kdeplot(s, ax=ax, label=lbl, color=colors[name], linewidth=2.0)
+                        sns.histplot(
+                            s,
+                            ax=ax,
+                            color=colors[name],
+                            stat="density",
+                            alpha=0.12,
+                            element="step",
+                            fill=True,
+                        )
+                    except Exception:
+                        ax.axvline(m_val, color=colors[name], label=lbl, linestyle="--")
+                ax.set_title(
+                    f"Comparative Density (KDE): {feature}", fontsize=10, fontweight="bold"
+                )
+                ax.set_ylabel("Density", fontsize=8.5)
+                ax.legend(fontsize=8, loc="upper right")
+
+        else:
+            prop_data = []
+            primary_name = next(iter(valid_dfs.keys()))
+            primary_cats = set(valid_dfs[primary_name].unique())
+
+            for name, s in valid_dfs.items():
+                vc = s.value_counts(normalize=True) * 100
+                for val, pct in vc.items():
+                    is_unseen = (name != primary_name) and (val not in primary_cats)
+                    prop_data.append(
+                        {
+                            "Dataset": name,
+                            "Category": f"{val} [UNSEEN]" if is_unseen else str(val),
+                            "Percentage": pct,
+                            "RawVal": str(val),
+                            "Unseen": is_unseen,
+                        }
+                    )
+
+            pdf = pd.DataFrame(prop_data)
+            top_cats = valid_dfs[primary_name].value_counts().index.tolist()
+            all_cats = list(
+                dict.fromkeys(top_cats + [x for x in pdf["RawVal"].unique() if x not in top_cats])
+            )[:10]
+            pdf = pdf[pdf["RawVal"].isin(all_cats)]
+
+            order = [f"{c} [UNSEEN]" if (c not in primary_cats) else str(c) for c in all_cats]
+            sns.barplot(
+                data=pdf,
+                y="Category",
+                x="Percentage",
+                hue="Dataset",
+                palette=colors,
+                ax=ax,
+                order=order,
+            )
+            ax.set_title(
+                f"Category Proportion Comparison: {feature}", fontsize=10, fontweight="bold"
+            )
+            ax.set_xlabel("Proportion (%)", fontsize=8.5)
+            ax.set_ylabel("Category", fontsize=8.5)
+            ax.legend(fontsize=8, loc="lower right")
+
+        ax.grid(True, linestyle="--", alpha=0.4)
+        ax.set_xlabel(feature, fontsize=8.5)
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
+
+    def plot_dataset_drift_overview(
+        self,
+        comparisons: dict[str, list[Any]],
+        secondary_name: str | None = None,
+        top_n: int = 10,
+    ) -> str:
+        """
+        Renders a dual-panel overview summarizing missingness drift (Δ missing %)
+        and unseen category counts between the Primary dataset and a Secondary dataset.
+        """
+        if not comparisons:
+            return ""
+
+        target_sec = secondary_name or next(iter(comparisons.keys()))
+        comp_list = comparisons.get(target_sec, [])
+        if not comp_list:
+            return ""
+
+        flagged = []
+        for c in comp_list:
+            delta_m = getattr(c, "delta_missing_pct", 0.0) or 0.0
+            p_m = getattr(c, "primary_missing_pct", 0.0) or 0.0
+            s_m = getattr(c, "secondary_missing_pct", 0.0) or 0.0
+            unseen_count = len(getattr(c, "unseen_categories", []))
+            flagged.append(
+                {
+                    "feature": c.feature,
+                    "primary_missing": p_m,
+                    "secondary_missing": s_m,
+                    "delta_missing": delta_m,
+                    "abs_delta": abs(delta_m),
+                    "unseen_count": unseen_count,
+                }
+            )
+
+        flagged.sort(key=lambda x: (x["unseen_count"] > 0, x["abs_delta"]), reverse=True)
+        top_items = flagged[:top_n]
+        if not top_items:
+            return ""
+
+        feats = [item["feature"] for item in top_items][::-1]
+        p_vals = [item["primary_missing"] for item in top_items][::-1]
+        s_vals = [item["secondary_missing"] for item in top_items][::-1]
+        unseen_counts = [item["unseen_count"] for item in top_items][::-1]
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.5, max(3.5, len(feats) * 0.40)))
+        y_pos = np.arange(len(feats))
+        height = 0.35
+
+        # Panel 1: Missing Rate Comparison
+        ax1.barh(y_pos - height / 2, p_vals, height, label="Primary", color="#2563eb", alpha=0.85)
+        ax1.barh(y_pos + height / 2, s_vals, height, label=target_sec, color="#d97706", alpha=0.85)
+        ax1.set_yticks(y_pos)
+        ax1.set_yticklabels(feats, fontweight="bold", fontsize=8.5)
+        ax1.set_xlabel("Missing Percentage (%)", fontsize=8.5)
+        ax1.set_title(f"Missingness: Primary vs {target_sec}", fontsize=10, fontweight="bold")
+        ax1.legend(loc="lower right", fontsize=8)
+        ax1.grid(True, linestyle="--", alpha=0.4)
+
+        # Panel 2: Net Missing Delta & Unseen Level Flags
+        deltas = [item["delta_missing"] for item in top_items][::-1]
+        bar_colors = ["#dc2626" if d > 0 else ("#16a34a" if d < 0 else "#64748b") for d in deltas]
+        bars = ax2.barh(y_pos, deltas, height=0.55, color=bar_colors, alpha=0.85)
+        ax2.set_yticks(y_pos)
+        ax2.set_yticklabels([""] * len(feats))
+        ax2.axvline(0, color="gray", linestyle="-", linewidth=0.8)
+        ax2.set_xlabel("Δ Missing % (Secondary - Primary)", fontsize=8.5)
+        ax2.set_title("Shift & Novel Category Alerts", fontsize=10, fontweight="bold")
+        ax2.grid(True, linestyle="--", alpha=0.4)
+
+        for i, bar in enumerate(bars):
+            w = bar.get_width()
+            offset = 0.5 if w >= 0 else -0.5
+            ha = "left" if w >= 0 else "right"
+            unseen_flag = f" [+{unseen_counts[i]} unseen!]" if unseen_counts[i] > 0 else ""
+            ax2.text(
+                w + offset,
+                bar.get_y() + bar.get_height() / 2,
+                f"{w:+.1f}%{unseen_flag}",
+                va="center",
+                ha=ha,
+                fontsize=7.5,
+                fontweight="bold",
+                color="#1e293b",
+            )
+
+        plt.tight_layout()
+        return self._fig_to_base64(fig)
+
     def plot_feature_summary_card(
         self,
         df: pd.DataFrame,
@@ -314,311 +521,381 @@ class EDAChartGenerator:
         target: str | None = None,
         is_feat_numeric: bool = True,
         is_target_numeric: bool = False,
+        secondary_dfs: dict[str, pd.DataFrame] | None = None,
+        primary_name: str = "Primary",
     ) -> str:
         """
         Renders a dual-panel card visualization:
-          - Panel 1 (Left): Feature distribution (Histogram/KDE or Categorical bar chart).
-          - Panel 2 (Right): Feature relation to Target (Adaptive: Scatter/Line, Box/Violin/Strip, Heatmap/Stacked).
+          - If secondary_dfs provided: Panel 1 overlays distributions across datasets.
+          - If target provided: Panel 2 displays the feature's relationship to the target in the primary dataset.
+          - If target is None: Panel 2 displays side-by-side quantile boxplots across datasets (or single panel if 1 dataset).
         """
         if feature not in df.columns or df[feature].dropna().empty:
             return ""
 
-        is_target_col = (feature == target) or (target is None) or (target not in df.columns)
+        has_target = (target is not None) and (target in df.columns) and (feature != target)
+        has_secondary = bool(secondary_dfs)
 
-        if is_target_col:
+        if not has_target and not has_secondary:
             fig, ax1 = plt.subplots(figsize=(6.2, 3.2))
             ax2 = None
         else:
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.4, 3.2))
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.5, 3.2))
 
         # --- 1. Distribution Plot on ax1 ---
-        s = df[feature].dropna()
-        n_unique = s.nunique()
+        all_dfs = {primary_name: df}
+        if secondary_dfs:
+            for s_name, s_df in secondary_dfs.items():
+                if feature in s_df.columns:
+                    all_dfs[s_name] = s_df
 
-        if is_feat_numeric:
-            if n_unique <= 10 or (s.std() == 0 if len(s) > 1 else True):
-                counts = s.value_counts().sort_index()
-                ax1.bar(
-                    [str(x) for x in counts.index],
-                    counts.values,
-                    color="#3b82f6",
-                    edgecolor="#1d4ed8",
-                    alpha=0.85,
-                )
-                ax1.set_title(
-                    f"Distribution: {feature} (Discrete)",
-                    fontsize=9.5,
-                    fontweight="bold",
-                )
-                ax1.set_ylabel("Count")
-                if len(counts) > 5:
-                    ax1.tick_params(axis="x", rotation=30)
-            else:
-                bins = min(30, max(12, int(np.sqrt(len(s)))))
-                sns.histplot(
-                    s,
-                    kde=True,
-                    ax=ax1,
-                    color="#2563eb",
-                    bins=bins,
-                    stat="density",
-                    edgecolor=None,
-                    alpha=0.55,
-                )
-                mean_val = float(s.mean())
-                med_val = float(s.median())
-                ax1.axvline(
-                    mean_val,
-                    color="#dc2626",
-                    linestyle="--",
-                    linewidth=1.2,
-                    label=f"Mean: {mean_val:.2g}",
-                )
-                ax1.axvline(
-                    med_val,
-                    color="#16a34a",
-                    linestyle=":",
-                    linewidth=1.2,
-                    label=f"Median: {med_val:.2g}",
-                )
-                ax1.set_title(f"Distribution: {feature}", fontsize=9.5, fontweight="bold")
+        if len(all_dfs) > 1:
+            # Overlaid comparison on ax1
+            colors = {
+                name: self.dataset_palette[i % len(self.dataset_palette)]
+                for i, name in enumerate(all_dfs.keys())
+            }
+            if is_feat_numeric:
+                for name, d in all_dfs.items():
+                    s = d[feature].dropna()
+                    if s.empty:
+                        continue
+                    m_val, _us_val = float(s.mean()), float(s.std())
+                    lbl = f"{name} (μ={m_val:.2g})"
+                    try:
+                        sns.kdeplot(s, ax=ax1, label=lbl, color=colors[name], linewidth=1.8)
+                        sns.histplot(
+                            s,
+                            ax=ax1,
+                            color=colors[name],
+                            stat="density",
+                            alpha=0.10,
+                            element="step",
+                        )
+                    except Exception:
+                        ax1.axvline(m_val, color=colors[name], label=lbl, linestyle="--")
+                ax1.set_title(f"{feature} Density Comparison", fontsize=9.5, fontweight="bold")
                 ax1.set_ylabel("Density")
                 ax1.legend(fontsize=7.5, loc="upper right")
-        else:
-            top_counts = s.value_counts().head(8)
-            y_pos = np.arange(len(top_counts))
-            bars = ax1.barh(
-                y_pos,
-                top_counts.values,
-                color="#8b5cf6",
-                edgecolor="#6d28d9",
-                height=0.6,
-                alpha=0.85,
-            )
-            ax1.set_yticks(y_pos)
-            ax1.set_yticklabels([str(k)[:16] for k in top_counts.index], fontsize=8)
-            ax1.invert_yaxis()
-            ax1.set_title(f"Top Categories: {feature}", fontsize=9.5, fontweight="bold")
-            ax1.set_xlabel("Count")
-            total_s = len(s)
-            max_w = max(top_counts.values) if not top_counts.empty else 1
-            for bar in bars:
-                w = bar.get_width()
-                pct = (w / total_s) * 100
-                ax1.text(
-                    w + (max_w * 0.02),
-                    bar.get_y() + bar.get_height() / 2,
-                    f"{int(w):,} ({pct:.1f}%)",
-                    va="center",
-                    fontsize=7.5,
-                    color="#4c1d95",
+            else:
+                prop_data = []
+                p_cats = set(df[feature].dropna().unique())
+                for name, d in all_dfs.items():
+                    vc = d[feature].dropna().value_counts(normalize=True) * 100
+                    for val, pct in vc.head(6).items():
+                        is_unseen = (name != primary_name) and (val not in p_cats)
+                        prop_data.append(
+                            {
+                                "Dataset": name,
+                                "Category": f"{val}*" if is_unseen else str(val),
+                                "Percentage": pct,
+                            }
+                        )
+                pdf = pd.DataFrame(prop_data)
+                sns.barplot(
+                    data=pdf, x="Category", y="Percentage", hue="Dataset", palette=colors, ax=ax1
                 )
-            ax1.set_xlim(0, max_w * 1.3)
+                ax1.set_title(f"{feature} Proportions (*=Unseen)", fontsize=9.5, fontweight="bold")
+                ax1.set_ylabel("Percentage (%)")
+                ax1.tick_params(axis="x", rotation=30)
+                ax1.legend(fontsize=7.5, loc="upper right")
+        else:
+            # Single dataset distribution on ax1
+            s = df[feature].dropna()
+            n_unique = s.nunique()
+            if is_feat_numeric:
+                if n_unique <= 10 or (s.std() == 0 if len(s) > 1 else True):
+                    counts = s.value_counts().sort_index()
+                    ax1.bar(
+                        [str(x) for x in counts.index], counts.values, color="#3b82f6", alpha=0.85
+                    )
+                    ax1.set_title(
+                        f"Distribution: {feature} (Discrete)", fontsize=9.5, fontweight="bold"
+                    )
+                    ax1.set_ylabel("Count")
+                    if len(counts) > 5:
+                        ax1.tick_params(axis="x", rotation=30)
+                else:
+                    bins = min(30, max(12, int(np.sqrt(len(s)))))
+                    sns.histplot(
+                        s, kde=True, ax=ax1, color="#2563eb", bins=bins, stat="density", alpha=0.55
+                    )
+                    mean_val = float(s.mean())
+                    med_val = float(s.median())
+                    ax1.axvline(
+                        mean_val,
+                        color="#dc2626",
+                        linestyle="--",
+                        linewidth=1.2,
+                        label=f"Mean: {mean_val:.2g}",
+                    )
+                    ax1.axvline(
+                        med_val,
+                        color="#16a34a",
+                        linestyle=":",
+                        linewidth=1.2,
+                        label=f"Median: {med_val:.2g}",
+                    )
+                    ax1.set_title(f"Distribution: {feature}", fontsize=9.5, fontweight="bold")
+                    ax1.set_ylabel("Density")
+                    ax1.legend(fontsize=7.5, loc="upper right")
+            else:
+                top_counts = s.value_counts().head(8)
+                y_pos = np.arange(len(top_counts))
+                bars = ax1.barh(y_pos, top_counts.values, color="#8b5cf6", height=0.6, alpha=0.85)
+                ax1.set_yticks(y_pos)
+                ax1.set_yticklabels([str(k)[:16] for k in top_counts.index], fontsize=8)
+                ax1.invert_yaxis()
+                ax1.set_title(f"Top Categories: {feature}", fontsize=9.5, fontweight="bold")
+                ax1.set_xlabel("Count")
+                total_s = len(s)
+                max_w = max(top_counts.values) if not top_counts.empty else 1
+                for bar in bars:
+                    w = bar.get_width()
+                    pct = (w / total_s) * 100
+                    ax1.text(
+                        w + (max_w * 0.02),
+                        bar.get_y() + bar.get_height() / 2,
+                        f"{int(w):,} ({pct:.1f}%)",
+                        va="center",
+                        fontsize=7.5,
+                        color="#4c1d95",
+                    )
+                ax1.set_xlim(0, max_w * 1.3)
 
         ax1.grid(True, linestyle="--", alpha=0.4)
 
-        # --- 2. Relationship with Target on ax2 ---
-        if not is_target_col and ax2 is not None:
-            sub = df[[feature, target]].dropna()
-            if sub.empty:
-                ax2.text(
-                    0.5,
-                    0.5,
-                    "No overlapping valid rows",
-                    ha="center",
-                    va="center",
-                    color="#94a3b8",
-                )
-                ax2.set_title(f"{feature} vs. {target}", fontsize=9.5, fontweight="bold")
-            else:
-                if len(sub) > 1500:
-                    sub = sub.sample(1500, random_state=42)
-
-                # Case A: Numeric Feature | Numeric Target
-                if is_feat_numeric and is_target_numeric:
-                    if sub[feature].nunique() <= 10:
-                        sns.lineplot(
-                            data=sub,
-                            x=feature,
-                            y=target,
-                            ax=ax2,
-                            marker="o",
-                            color="#2563eb",
-                            errorbar="sd",
-                        )
-                        ax2.set_title(
-                            f"{feature} vs. {target} (Line & SD)",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                    else:
-                        sns.regplot(
-                            data=sub,
-                            x=feature,
-                            y=target,
-                            ax=ax2,
-                            scatter_kws={"alpha": 0.35, "s": 15, "color": "#2563eb"},
-                            line_kws={"color": "#dc2626", "linewidth": 1.4},
-                        )
-                        ax2.set_title(
-                            f"{feature} vs. {target} (Scatter & Trend)",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-
-                # Case B: Numeric Feature | Categorical Target
-                elif is_feat_numeric and not is_target_numeric:
-                    target_cardinality = sub[target].nunique()
-                    if target_cardinality <= 4 and len(sub) >= 40 and sub[feature].nunique() > 10:
-                        sns.violinplot(
-                            data=sub,
-                            x=target,
-                            y=feature,
-                            ax=ax2,
-                            palette="crest",
-                            inner="quartile",
-                            cut=0,
-                            hue=target,
-                            legend=False,
-                        )
-                        ax2.set_title(
-                            f"{feature} by {target}",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                    elif sub[feature].nunique() <= 5:
-                        sns.stripplot(
-                            data=sub,
-                            x=target,
-                            y=feature,
-                            ax=ax2,
-                            jitter=0.25,
-                            alpha=0.6,
-                            palette="crest",
-                            hue=target,
-                            legend=False,
-                        )
-                        ax2.set_title(
-                            f"{feature} by {target}",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                    else:
-                        sns.boxplot(
-                            data=sub,
-                            x=target,
-                            y=feature,
-                            ax=ax2,
-                            palette="crest",
-                            showmeans=True,
-                            meanprops={
-                                "marker": "o",
-                                "markerfacecolor": "white",
-                                "markeredgecolor": "#0f172a",
-                            },
-                            hue=target,
-                            legend=False,
-                        )
-                        ax2.set_title(
-                            f"{feature} by {target}",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                    if target_cardinality > 4:
-                        ax2.tick_params(axis="x", rotation=30)
-
-                # Case C: Categorical Feature | Categorical Target
-                elif not is_feat_numeric and not is_target_numeric:
-                    top_f = sub[feature].value_counts().head(7).index
-                    top_t = sub[target].value_counts().head(5).index
-                    sub_ct = sub[sub[feature].isin(top_f) & sub[target].isin(top_t)]
-                    ct = pd.crosstab(sub_ct[feature], sub_ct[target])
-
-                    if ct.shape[0] * ct.shape[1] <= 20 and not ct.empty:
-                        ct_norm = (
-                            pd.crosstab(sub_ct[feature], sub_ct[target], normalize="index") * 100
-                        )
-                        sns.heatmap(
-                            ct_norm,
-                            annot=True,
-                            fmt=".1f",
-                            cmap="Blues",
-                            cbar_kws={"label": "Row %", "shrink": 0.8},
-                            ax=ax2,
-                            annot_kws={"size": 8},
-                        )
-                        ax2.set_title(
-                            f"{feature} vs. {target} (%)",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                        ax2.tick_params(axis="x", rotation=30)
-                    else:
-                        ct_norm = (
-                            pd.crosstab(sub_ct[feature], sub_ct[target], normalize="index") * 100
-                        )
-                        ct_norm.plot(
-                            kind="barh",
-                            stacked=True,
-                            ax=ax2,
-                            colormap="tab10",
-                            alpha=0.85,
-                        )
-                        ax2.set_title(
-                            f"{feature} vs. {target} (%)",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                        ax2.set_xlabel("Percentage (%)", fontsize=8)
-                        ax2.legend(
-                            title=target,
-                            fontsize=7,
-                            title_fontsize=8,
-                            bbox_to_anchor=(1.02, 1),
-                            loc="upper left",
-                        )
-
-                # Case D: Categorical Feature | Numeric Target
+        # --- 2. Relationship or Dataset Comparison on ax2 ---
+        if ax2 is not None:
+            if has_target:
+                # Relationship to target
+                sub = df[[feature, target]].dropna()
+                if sub.empty:
+                    ax2.text(
+                        0.5,
+                        0.5,
+                        "No overlapping valid rows",
+                        ha="center",
+                        va="center",
+                        color="#94a3b8",
+                    )
+                    ax2.set_title(f"{feature} vs. {target}", fontsize=9.5, fontweight="bold")
                 else:
-                    top_f = sub[feature].value_counts().head(6).index
-                    sub_f = sub[sub[feature].isin(top_f)]
-                    if len(top_f) <= 5:
+                    if len(sub) > 1500:
+                        sub = sub.sample(1500, random_state=42)
+
+                    if is_feat_numeric and is_target_numeric:
+                        if sub[feature].nunique() <= 10:
+                            sns.lineplot(
+                                data=sub,
+                                x=feature,
+                                y=target,
+                                ax=ax2,
+                                marker="o",
+                                color="#2563eb",
+                                errorbar="sd",
+                            )
+                            ax2.set_title(
+                                f"{feature} vs. {target} (Line & SD)",
+                                fontsize=9.5,
+                                fontweight="bold",
+                            )
+                        else:
+                            sns.regplot(
+                                data=sub,
+                                x=feature,
+                                y=target,
+                                ax=ax2,
+                                scatter_kws={"alpha": 0.35, "s": 15, "color": "#2563eb"},
+                                line_kws={"color": "#dc2626", "linewidth": 1.4},
+                            )
+                            ax2.set_title(
+                                f"{feature} vs. {target} (Trend)", fontsize=9.5, fontweight="bold"
+                            )
+
+                    elif is_feat_numeric and not is_target_numeric:
+                        target_cardinality = sub[target].nunique()
+                        if (
+                            target_cardinality <= 4
+                            and len(sub) >= 40
+                            and sub[feature].nunique() > 10
+                        ):
+                            sns.violinplot(
+                                data=sub,
+                                x=target,
+                                y=feature,
+                                ax=ax2,
+                                palette="crest",
+                                inner="quartile",
+                                cut=0,
+                                hue=target,
+                                legend=False,
+                            )
+                            ax2.set_title(
+                                f"{feature} by {target} (Violin)", fontsize=9.5, fontweight="bold"
+                            )
+                        elif sub[feature].nunique() <= 5:
+                            sns.stripplot(
+                                data=sub,
+                                x=target,
+                                y=feature,
+                                ax=ax2,
+                                jitter=0.25,
+                                alpha=0.6,
+                                palette="crest",
+                                hue=target,
+                                legend=False,
+                            )
+                            ax2.set_title(
+                                f"{feature} by {target} (Strip)", fontsize=9.5, fontweight="bold"
+                            )
+                        else:
+                            sns.boxplot(
+                                data=sub,
+                                x=target,
+                                y=feature,
+                                ax=ax2,
+                                palette="crest",
+                                showmeans=True,
+                                meanprops={
+                                    "marker": "o",
+                                    "markerfacecolor": "white",
+                                    "markeredgecolor": "#0f172a",
+                                },
+                            )
+                            ax2.set_title(
+                                f"{feature} by {target} (Box)", fontsize=9.5, fontweight="bold"
+                            )
+                        if target_cardinality > 4:
+                            ax2.tick_params(axis="x", rotation=30)
+
+                    elif not is_feat_numeric and not is_target_numeric:
+                        top_f = sub[feature].value_counts().head(7).index
+                        top_t = sub[target].value_counts().head(5).index
+                        sub_ct = sub[sub[feature].isin(top_f) & sub[target].isin(top_t)]
+                        ct = pd.crosstab(sub_ct[feature], sub_ct[target])
+
+                        if ct.shape[0] * ct.shape[1] <= 20 and not ct.empty:
+                            ct_norm = (
+                                pd.crosstab(sub_ct[feature], sub_ct[target], normalize="index")
+                                * 100
+                            )
+                            sns.heatmap(
+                                ct_norm,
+                                annot=True,
+                                fmt=".1f",
+                                cmap="Blues",
+                                cbar_kws={"label": "Row %", "shrink": 0.8},
+                                ax=ax2,
+                                annot_kws={"size": 8},
+                            )
+                            ax2.set_title(
+                                f"{feature} vs. {target} (% Heatmap)",
+                                fontsize=9.5,
+                                fontweight="bold",
+                            )
+                            ax2.tick_params(axis="x", rotation=30)
+                        else:
+                            ct_norm = (
+                                pd.crosstab(sub_ct[feature], sub_ct[target], normalize="index")
+                                * 100
+                            )
+                            ct_norm.plot(
+                                kind="barh", stacked=True, ax=ax2, colormap="tab10", alpha=0.85
+                            )
+                            ax2.set_title(
+                                f"{feature} vs. {target} (Stacked %)",
+                                fontsize=9.5,
+                                fontweight="bold",
+                            )
+                            ax2.set_xlabel("Percentage (%)", fontsize=8)
+
+                    else:
+                        top_f = sub[feature].value_counts().head(6).index
+                        sub_f = sub[sub[feature].isin(top_f)]
+                        if len(top_f) <= 5:
+                            sns.boxplot(
+                                data=sub_f,
+                                x=feature,
+                                y=target,
+                                ax=ax2,
+                                palette="Blues_r",
+                                showmeans=True,
+                                meanprops={
+                                    "marker": "o",
+                                    "markerfacecolor": "white",
+                                    "markeredgecolor": "#0f172a",
+                                },
+                                hue=feature,
+                                legend=False,
+                            )
+                            ax2.set_title(
+                                f"{target} by {feature} (Box)", fontsize=9.5, fontweight="bold"
+                            )
+                        else:
+                            sns.barplot(
+                                data=sub_f,
+                                x=feature,
+                                y=target,
+                                ax=ax2,
+                                palette="Blues_r",
+                                errorbar="se",
+                            )
+                            ax2.set_title(
+                                f"Mean {target} by {feature} (±SE)", fontsize=9.5, fontweight="bold"
+                            )
+                        if len(top_f) > 3:
+                            ax2.tick_params(axis="x", rotation=30)
+
+            elif has_secondary:
+                # No target, but secondary datasets exist: show side-by-side quantile boxplot
+                if is_feat_numeric:
+                    box_records = []
+                    for name, d in all_dfs.items():
+                        vals = d[feature].dropna()
+                        for v in vals:
+                            box_records.append({"Dataset": name, "Value": float(v)})
+                    if box_records:
+                        b_df = pd.DataFrame(box_records)
+                        colors = [
+                            self.dataset_palette[i % len(self.dataset_palette)]
+                            for i in range(len(all_dfs))
+                        ]
                         sns.boxplot(
-                            data=sub_f,
-                            x=feature,
-                            y=target,
+                            data=b_df,
+                            x="Dataset",
+                            y="Value",
+                            palette=colors,
                             ax=ax2,
-                            palette="Blues_r",
-                            showmeans=True,
-                            meanprops={
-                                "marker": "o",
-                                "markerfacecolor": "white",
-                                "markeredgecolor": "#0f172a",
-                            },
-                            hue=feature,
+                            hue="Dataset",
                             legend=False,
                         )
                         ax2.set_title(
-                            f"{target} by {feature}",
-                            fontsize=9.5,
-                            fontweight="bold",
+                            f"Quantile Comparison: {feature}", fontsize=9.5, fontweight="bold"
                         )
-                    else:
-                        sns.barplot(
-                            data=sub_f,
-                            x=feature,
-                            y=target,
-                            ax=ax2,
-                            palette="Blues_r",
-                            errorbar="se",
+                        ax2.set_ylabel(feature)
+                else:
+                    # Categorical: Cardinality & Unseen counts
+                    cats_summary = []
+                    for name, d in all_dfs.items():
+                        cats_summary.append(
+                            {
+                                "Dataset": name,
+                                "Distinct": int(d[feature].nunique(dropna=True)),
+                            }
                         )
-                        ax2.set_title(
-                            f"Mean {target} by {feature} (±SE)",
-                            fontsize=9.5,
-                            fontweight="bold",
-                        )
-                    if len(top_f) > 3:
-                        ax2.tick_params(axis="x", rotation=30)
+                    c_df = pd.DataFrame(cats_summary)
+                    sns.barplot(
+                        data=c_df,
+                        x="Dataset",
+                        y="Distinct",
+                        palette=self.dataset_palette[: len(all_dfs)],
+                        ax=ax2,
+                        hue="Dataset",
+                        legend=False,
+                    )
+                    ax2.set_title(f"Distinct Levels: {feature}", fontsize=9.5, fontweight="bold")
+                    ax2.set_ylabel("Cardinality")
 
             ax2.grid(True, linestyle="--", alpha=0.4)
 
@@ -1035,21 +1312,26 @@ class EDAChartGenerator:
         self,
         pca_coords: list[list[float]],
         cluster_labels: list[int],
-        target_series: pd.Series,
+        target_series: pd.Series | None = None,
         is_target_numeric: bool = False,
     ) -> str:
         """
-        Renders a 3-panel clustering dashboard:
-          - Panel 1: 2D PCA space colored by assigned Cluster IDs.
-          - Panel 2: 2D PCA space colored by Target signal.
-          - Panel 3: Target distribution per Cluster ID (Boxplot or Stacked Bar).
+        Renders clustering projections:
+          - If Target exists (3 panels): PCA clusters, PCA target gradient, target distribution by cluster.
+          - If Target is None (2 panels): PCA clusters and cluster instance counts & percentages.
         """
         if not pca_coords or not cluster_labels:
             return ""
 
         pca_arr = np.array(pca_coords)
         clusters_arr = np.array(cluster_labels)
-        target_arr = target_series.to_numpy()
+
+        # Safely verify if target data is available and matches sample size
+        has_target = (
+            target_series is not None
+            and len(target_series) == len(pca_arr)
+            and not target_series.dropna().empty
+        )
 
         # Downsample if dense to maintain clean vector rendering
         if len(pca_arr) > 1500:
@@ -1057,11 +1339,19 @@ class EDAChartGenerator:
             idx = rng.choice(len(pca_arr), size=1500, replace=False)
             pca_arr = pca_arr[idx]
             clusters_arr = clusters_arr[idx]
-            target_arr = target_arr[idx]
+            if has_target:
+                target_arr = target_series.to_numpy()[idx]
+        else:
+            if has_target:
+                target_arr = target_series.to_numpy()
 
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14.5, 3.8))
+        if has_target:
+            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14.5, 3.8))
+        else:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.0, 3.8))
+            ax3 = None
 
-        # --- Panel 1: PCA by Cluster ID ---
+        # --- Panel 1: PCA by Cluster ID (Always Rendered) ---
         unique_clusters = np.unique(clusters_arr)
         palette = sns.color_palette("tab10", len(unique_clusters))
         for i, c_id in enumerate(unique_clusters):
@@ -1092,85 +1382,111 @@ class EDAChartGenerator:
         ax1.legend(fontsize=7.5, loc="upper right")
         ax1.grid(True, linestyle="--", alpha=0.4)
 
-        # --- Panel 2: PCA by Target ---
-        if is_target_numeric:
-            sc = ax2.scatter(
-                pca_arr[:, 0],
-                pca_arr[:, 1],
-                c=target_arr.astype(float),
-                cmap="viridis",
-                alpha=0.65,
-                s=20,
-            )
-            cbar = fig.colorbar(sc, ax=ax2, shrink=0.8, pad=0.02)
-            cbar.ax.tick_params(labelsize=7.5)
-        else:
-            t_series = pd.Series(target_arr).astype(str)
-            sns.scatterplot(
-                x=pca_arr[:, 0],
-                y=pca_arr[:, 1],
-                hue=t_series,
-                palette="tab10",
-                alpha=0.7,
-                s=22,
-                ax=ax2,
-            )
-            ax2.legend(fontsize=7.5, loc="upper right")
-
-        ax2.set_title("Target Gradient in PCA Space", fontsize=10, fontweight="bold")
-        ax2.set_xlabel("PCA Component 1", fontsize=8.5)
-        ax2.set_ylabel("PCA Component 2", fontsize=8.5)
-        ax2.grid(True, linestyle="--", alpha=0.4)
-
-        # --- Panel 3: Target Distribution per Cluster ---
-        cluster_labels_str = [f"C{c}" for c in clusters_arr]
-        df_cluster_target = pd.DataFrame({"Cluster": cluster_labels_str, "Target": target_arr})
-
-        if is_target_numeric:
-            df_cluster_target["Target"] = df_cluster_target["Target"].astype(float)
-            sns.boxplot(
-                data=df_cluster_target,
-                x="Cluster",
-                y="Target",
-                ax=ax3,
-                palette="Blues_r",
-                showmeans=True,
-                meanprops={
-                    "marker": "o",
-                    "markerfacecolor": "white",
-                    "markeredgecolor": "#0f172a",
-                },
-                hue="Cluster",
-                legend=False,
-            )
-            global_mean = float(df_cluster_target["Target"].mean())
-            ax3.axhline(
-                global_mean,
-                color="#dc2626",
-                linestyle="--",
-                linewidth=1.2,
-                label=f"Mean: {global_mean:.2g}",
-            )
-            ax3.set_title("Target Value by Cluster", fontsize=10, fontweight="bold")
-            ax3.set_ylabel("Target", fontsize=8.5)
-            ax3.legend(fontsize=7.5, loc="upper right")
-        else:
-            ct = (
-                pd.crosstab(
-                    df_cluster_target["Cluster"],
-                    df_cluster_target["Target"],
-                    normalize="index",
+        if has_target:
+            # --- Panel 2: PCA by Target ---
+            if is_target_numeric:
+                sc = ax2.scatter(
+                    pca_arr[:, 0],
+                    pca_arr[:, 1],
+                    c=target_arr.astype(float),
+                    cmap="viridis",
+                    alpha=0.65,
+                    s=20,
                 )
-                * 100
-            )
-            ct.plot(kind="bar", stacked=True, ax=ax3, colormap="tab10", alpha=0.85)
-            ax3.set_title("Class Proportion by Cluster (%)", fontsize=10, fontweight="bold")
-            ax3.set_ylabel("Percentage", fontsize=8.5)
-            ax3.tick_params(axis="x", rotation=0)
-            ax3.legend(fontsize=7.5, bbox_to_anchor=(1.02, 1), loc="upper left")
+                cbar = fig.colorbar(sc, ax=ax2, shrink=0.8, pad=0.02)
+                cbar.ax.tick_params(labelsize=7.5)
+            else:
+                t_series = pd.Series(target_arr).astype(str)
+                sns.scatterplot(
+                    x=pca_arr[:, 0],
+                    y=pca_arr[:, 1],
+                    hue=t_series,
+                    palette="tab10",
+                    alpha=0.7,
+                    s=22,
+                    ax=ax2,
+                )
+                ax2.legend(fontsize=7.5, loc="upper right")
 
-        ax3.set_xlabel("Cluster ID", fontsize=8.5)
-        ax3.grid(True, linestyle="--", alpha=0.4)
+            ax2.set_title("Target Gradient in PCA Space", fontsize=10, fontweight="bold")
+            ax2.set_xlabel("PCA Component 1", fontsize=8.5)
+            ax2.set_ylabel("PCA Component 2", fontsize=8.5)
+            ax2.grid(True, linestyle="--", alpha=0.4)
+
+            # --- Panel 3: Target Distribution per Cluster ---
+            cluster_labels_str = [f"C{c}" for c in clusters_arr]
+            df_cluster_target = pd.DataFrame({"Cluster": cluster_labels_str, "Target": target_arr})
+
+            if is_target_numeric:
+                df_cluster_target["Target"] = df_cluster_target["Target"].astype(float)
+                sns.boxplot(
+                    data=df_cluster_target,
+                    x="Cluster",
+                    y="Target",
+                    ax=ax3,
+                    palette="Blues_r",
+                    showmeans=True,
+                    meanprops={
+                        "marker": "o",
+                        "markerfacecolor": "white",
+                        "markeredgecolor": "#0f172a",
+                    },
+                    hue="Cluster",
+                    legend=False,
+                )
+                global_mean = float(df_cluster_target["Target"].mean())
+                ax3.axhline(
+                    global_mean,
+                    color="#dc2626",
+                    linestyle="--",
+                    linewidth=1.2,
+                    label=f"Mean: {global_mean:.2g}",
+                )
+                ax3.set_title("Target Value by Cluster", fontsize=10, fontweight="bold")
+                ax3.set_ylabel("Target", fontsize=8.5)
+                ax3.legend(fontsize=7.5, loc="upper right")
+            else:
+                ct = (
+                    pd.crosstab(
+                        df_cluster_target["Cluster"], df_cluster_target["Target"], normalize="index"
+                    )
+                    * 100
+                )
+                ct.plot(kind="bar", stacked=True, ax=ax3, colormap="tab10", alpha=0.85)
+                ax3.set_title("Class Proportion by Cluster (%)", fontsize=10, fontweight="bold")
+                ax3.set_ylabel("Percentage", fontsize=8.5)
+                ax3.tick_params(axis="x", rotation=0)
+                ax3.legend(fontsize=7.5, bbox_to_anchor=(1.02, 1), loc="upper left")
+
+            ax3.set_xlabel("Cluster ID", fontsize=8.5)
+            ax3.grid(True, linestyle="--", alpha=0.4)
+
+        else:
+            # --- Panel 2 (Unsupervised / No Target): Cluster Sizes & Percentages ---
+            unique, counts = np.unique(clusters_arr, return_counts=True)
+            total_samples = len(clusters_arr)
+            labels = [f"Cluster {u}" for u in unique]
+            percentages = (counts / total_samples) * 100
+
+            bars = ax2.bar(labels, counts, color=palette[: len(unique)], alpha=0.85)
+            ax2.set_title("Cluster Instance Distribution", fontsize=10, fontweight="bold")
+            ax2.set_xlabel("Cluster ID", fontsize=8.5)
+            ax2.set_ylabel("Sample Count", fontsize=8.5)
+            ax2.grid(True, linestyle="--", alpha=0.4)
+
+            for bar, pct in zip(bars, percentages):
+                yval = bar.get_height()
+                ax2.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    yval + (max(counts) * 0.02),
+                    f"{int(yval):,} ({pct:.1f}%)",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    fontweight="bold",
+                    color="#1e293b",
+                )
+            ax2.set_ylim(0, max(counts) * 1.18)
 
         plt.tight_layout()
         return self._fig_to_base64(fig)

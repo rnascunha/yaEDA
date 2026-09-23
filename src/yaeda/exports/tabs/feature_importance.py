@@ -3,15 +3,13 @@ from yaeda.feature_importance import FeatureImportanceReport
 
 
 class FeatureImporanceTab(HTMLTab):
-    def __init__(
-        self,
-        importance_report: FeatureImportanceReport | None,
-    ):
+    def __init__(self, importance_report: FeatureImportanceReport | None, has_target: bool):
         super().__init__("golden", "🌟 Golden Features")
         self._report = importance_report
+        self.has_target = has_target
 
     def has_report(self) -> str:
-        return self._report is not None
+        return self.has_target and self._report is not None
 
     def _generate(self) -> str:
         golden_rows = []
@@ -60,7 +58,7 @@ class FeatureImporanceTab(HTMLTab):
         return f"""<div class="card">
                     <div class="card-header">
                         <div class="card-title">Golden Features Ranking Leaderboard</div>
-                        <input type="text" class="search-box" placeholder="Filter features..." onkeyup="filterRows('tab-golden', this.value)">
+                        <input type="text" class="search-box" placeholder="Filter features..." onkeyup="filterRows('tab-{self._id}', this.value)">
                     </div>
                     <div class="table-responsive">
                         <table class="data-table">

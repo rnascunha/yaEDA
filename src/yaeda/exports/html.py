@@ -16,6 +16,7 @@ from .tabs.cluster import ClusterTab
 from .tabs.correlation import CollinearTab
 from .tabs.health import HealthTab
 from .tabs.features import FeaturesTab
+from .tabs.comparsion import ComparsionTab
 from .tabs.feature_importance import FeatureImporanceTab
 from .tabs.interactions import InteractionsTab
 from .tabs.model_diagnostics import ModelDiagnosticsTab
@@ -39,6 +40,9 @@ class EDAHTMLDashboardBuilder:
         interaction_report: InteractionReport = None,
         cluster_report: list[ClusterReport] | None = None,
         diagnostics_report: ModelDiagnosticsReport | None = None,
+        multi_profile: Any | None = None,
+        secondary_dfs: dict[str, pd.DataFrame] | None = None,
+        primary_name: str = "Primary",
     ):
         self.df = df
         self.cg = chart_generator or EDAChartGenerator()
@@ -46,6 +50,13 @@ class EDAHTMLDashboardBuilder:
         self.tp = table_profile
         self.ir = importance_report
         self.cr = corr_report
+
+        self.multi_profile = multi_profile
+        self.secondary_dfs = secondary_dfs or {}
+        self.primary_name = primary_name
+
+        self.has_target = self.tp.target_column is not None
+        self.has_secondary = bool(self.secondary_dfs) and (self.multi_profile is not None)
 
         # Normalize prominent_features to list[str] regardless of nesting
         raw_feats = prominent_features or []
@@ -66,10 +77,20 @@ class EDAHTMLDashboardBuilder:
             df,
             self.cg,
             self.prominent_features,
+            self.multi_profile,
+            self.secondary_dfs,
+            self.has_secondary,
+            self.has_target,
+            self.primary_name,
+        )
+        self.comp_tab = ComparsionTab(
+            table_profile, multi_profile, self.has_secondary, self.primary_name, self.cg
         )
         self.cr_tab = CollinearTab(corr_report)
-        self.ir_tab = FeatureImporanceTab(importance_report)
-        self.cluster_tab = ClusterTab(cluster_report, df, self.cg)
+        self.ir_tab = FeatureImporanceTab(importance_report, self.has_target)
+        self.cluster_tab = ClusterTab(
+            cluster_report, table_profile, corr_report, df, self.cg, self.has_target
+        )
         self.chart_tab = ChartsTab(table_profile, corr_report, importance_report, self.cg)
         self.pdp_tab = PDPTab(
             table_profile,
@@ -77,6 +98,7 @@ class EDAHTMLDashboardBuilder:
             importance_report,
             self.cg,
             self.prominent_features,
+            self.has_target,
         )
         self.interaction_tab = InteractionsTab(
             interaction_report, df, features=self.prominent_features, cg=self.cg
@@ -104,6 +126,13 @@ class EDAHTMLDashboardBuilder:
         feature_cards_tab_content = self.features_tab.generate()
         pdp_tab_content = self.pdp_tab.generate()
         health_tab_content = self.health_tab.generate()
+        comparsion_tab_content = self.comp_tab.generate()
+
+        target_badge = (
+            f"Target: <strong>{self.tp.target_column}</strong> ({self.cr.target_type.upper() if self.cr.target_type else 'SUPERVISED'})"
+            if self.has_target
+            else "Target: <em>None (Unsupervised / Test Exploration)</em>"
+        )
 
         attr_label = getattr(self.ir, "attribution_method", "Attribution Analysis")
 
@@ -112,7 +141,7 @@ class EDAHTMLDashboardBuilder:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDA & Prominent Predictors Dashboard</title>
+    <title>EDA Dashboard • {self.primary_name}</title>
     <style>
         :root {{
             --bg-body: #f8fafc;
@@ -267,8 +296,10 @@ class EDAHTMLDashboardBuilder:
 <div class="container">
     <div class="header">
         <div>
-            <h1 style="font-size:21px; font-weight:700;">Exploratory Data Analysis & Golden Features Dashboard</h1>
-            <p style="color:#94a3b8; font-size:13px;">Target: <strong>{self.tp.target_column}</strong> | Task: <strong>{self.cr.target_type.upper()}</strong></p>
+            <h1 style="font-size:21px; font-weight:700;">yaEDA Dashboard</h1>
+            <p style="color:#94a3b8; font-size:13px;">Dataset: <strong>{
+            self.primary_name
+        }</strong> &bull; {target_badge}</p>
         </div>
         <div>
             <span class="engine-tag">Engine: {self.ir.model_type}</span>
@@ -278,13 +309,21 @@ class EDAHTMLDashboardBuilder:
 
     <div class="kpi-grid">
         <div class="kpi-card">
-            <div class="kpi-title">Dimensions</div>
+            <div class="kpi-title">{self.primary_name} Dimensions</div>
             <div class="kpi-value">{self.tp.n_rows:,} &times; {self.tp.n_columns}</div>
         </div>
+        {
+            f'''
         <div class="kpi-card">
-            <div class="kpi-title">Prominent Selected</div>
-            <div class="kpi-value" style="color: var(--golden);">{len(self.prominent_features)}</div>
+            <div class="kpi-title">Secondary Datasets</div>
+            <div class="kpi-value" style="color: var(--primary);">{len(self.secondary_dfs)}</div>
         </div>
+        '''
+            if self.has_secondary
+            else ""
+        }
+        {
+            f'''
         <div class="kpi-card">
             <div class="kpi-title">Golden Features</div>
             <div class="kpi-value" style="color: var(--golden);">{golden_count}</div>
@@ -293,15 +332,22 @@ class EDAHTMLDashboardBuilder:
             <div class="kpi-title">Strong Predictors</div>
             <div class="kpi-value" style="color: var(--primary);">{strong_count}</div>
         </div>
+        '''
+            if self.has_target
+            else ""
+        }
         <div class="kpi-card">
             <div class="kpi-title">Collinear Warnings</div>
-            <div class="kpi-value" style="color: {"#d97706" if collinear_count else "#10b981"};">{collinear_count}</div>
+            <div class="kpi-value" style="color: {"#d97706" if collinear_count else "#10b981"};">{
+            collinear_count
+        }</div>
         </div>
     </div>
 
     <div class="tabs-nav">
         {self.health_tab.head}
         {self.features_tab.head}
+        {self.comp_tab.head}
         {self.ir_tab.head}
         {self.cr_tab.head}
         {self.interaction_tab.head}    
@@ -313,6 +359,7 @@ class EDAHTMLDashboardBuilder:
     </div>
     {health_tab_content}
     {feature_cards_tab_content}
+    {comparsion_tab_content}
     {feature_importance_cotennt}
     {collinear_table_html}
     {interaction_tab_content}

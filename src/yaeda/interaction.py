@@ -40,22 +40,26 @@ class FeatureInteractionAnalyzer:
     def __init__(
         self,
         df: pd.DataFrame,
-        target: str,
-        features: list[str],
+        target: str | None = None,
+        features: list[str] | None = None,
         target_type: Literal["classification", "regression"] = "regression",
         max_pairs: int | None = None,
         random_state: int = 42,
     ):
+        if target is not None and target not in df.columns:
+            raise ValueError(f"Target column '{target}' not in DataFrame.")
+
         self.df = df
         self.target = target
-        self.features = [f for f in features if f in df.columns and f != target]
+        if features is not None:
+            self.features = [f for f in features if f in df.columns and f != target]
+        else:
+            self.features = [col for col in df.columns if col != target]
         self.target_type = target_type
         self.max_pairs = max_pairs
         self.random_state = random_state
 
-    def _eval_association(
-        self, series: pd.Series, target_series: pd.Series
-    ) -> tuple[float, str]:
+    def _eval_association(self, series: pd.Series, target_series: pd.Series) -> tuple[float, str]:
         valid = pd.concat([series, target_series], axis=1).dropna()
         if len(valid) < 5 or valid.iloc[:, 0].nunique() <= 1:
             return 0.0, "None"
@@ -82,6 +86,14 @@ class FeatureInteractionAnalyzer:
                 return 0.0, "Mutual Information"
 
     def run(self) -> InteractionReport:
+        if self.target is None or self.target not in self.df.columns:
+            return InteractionReport(
+                target=None,
+                target_type=self.target_type,
+                top_interactions=[],
+                best_per_pair=[],
+            )
+
         num_feats = [
             f
             for f in self.features
@@ -90,9 +102,7 @@ class FeatureInteractionAnalyzer:
         ]
 
         target_s = self.df[self.target]
-        base_scores = {
-            f: self._eval_association(self.df[f], target_s)[0] for f in num_feats
-        }
+        base_scores = {f: self._eval_association(self.df[f], target_s)[0] for f in num_feats}
 
         all_pairs = list(combinations(num_feats, 2))
         pairs = all_pairs[: self.max_pairs] if self.max_pairs else all_pairs

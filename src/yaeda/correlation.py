@@ -28,8 +28,8 @@ class CollinearPair:
 
 @dataclass
 class CorrelationReport:
-    target: str
-    target_type: Literal["classification", "regression"]
+    target: str | None
+    target_type: Literal["classification", "regression"] | None
     target_associations: dict[str, TargetAssociation]
     collinear_pairs: list[CollinearPair]
     pearson_matrix: dict[str, dict[str, float]]
@@ -45,13 +45,13 @@ class FeatureTargetAnalyzer:
     def __init__(
         self,
         df: pd.DataFrame,
-        target: str,
+        target: str | None = None,
         features: list[str] | None = None,
         target_type: Literal["classification", "regression"] | None = None,
         collinear_threshold: float = 0.80,
         random_state: int = 42,
     ):
-        if target not in df.columns:
+        if target is not None and target not in df.columns:
             raise ValueError(f"Target column '{target}' not in DataFrame.")
 
         self.target = target
@@ -64,11 +64,13 @@ class FeatureTargetAnalyzer:
         else:
             self.features = [col for col in df.columns if col != target]
 
-        # Filter to rows where target is present
-        self.df = df[self.features + [self.target]].dropna(subset=[self.target]).copy()
-
-        # Determine target type if not provided
-        self.target_type = target_type or self._infer_target_type(self.df[self.target])
+        cols_to_keep = self.features + ([self.target] if self.target else [])
+        if self.target:
+            self.df = df[cols_to_keep].dropna(subset=[self.target]).copy()
+            self.target_type = target_type or self._infer_target_type(self.df[self.target])
+        else:
+            self.df = df[cols_to_keep].copy()
+            self.target_type = None
 
     def _infer_target_type(
         self, target_series: pd.Series
@@ -78,7 +80,6 @@ class FeatureTargetAnalyzer:
         )
         unique_count = target_series.nunique()
 
-        # Categorical, boolean, or few unique integers imply classification
         if not is_num or unique_count <= 10 or pd.api.types.is_bool_dtype(target_series):
             return "classification"
         return "regression"
@@ -102,6 +103,9 @@ class FeatureTargetAnalyzer:
             spearman_mat = pd.DataFrame()
 
         target_stats: dict[str, dict[str, float]] = {}
+        if self.target is None or self.target not in self.df.columns:
+            return pearson_mat, spearman_mat, target_stats
+
         target_s = self.df[self.target]
         is_num_target = pd.api.types.is_numeric_dtype(target_s) and not pd.api.types.is_bool_dtype(
             target_s
@@ -112,7 +116,6 @@ class FeatureTargetAnalyzer:
         if is_num_target and self.target_type == "regression":
             clean_target = target_s.astype(float)
         elif is_binary:
-            # Point-biserial correlation: factorize binary target to 0.0 and 1.0
             clean_target = pd.Series(pd.factorize(target_s)[0], index=self.df.index, dtype=float)
         elif is_num_target:
             clean_target = target_s.astype(float)
@@ -141,6 +144,9 @@ class FeatureTargetAnalyzer:
         return pearson_mat, spearman_mat, target_stats
 
     def _compute_mutual_information(self) -> dict[str, float]:
+        if self.target is None or self.target not in self.df.columns:
+            return {}
+
         X = self.df[self.features].copy()
         y = self.df[self.target].copy()
 
@@ -153,7 +159,6 @@ class FeatureTargetAnalyzer:
             )
             discrete_mask.append(is_discrete)
 
-            # Impute and encode for scikit-learn estimators
             if not pd.api.types.is_numeric_dtype(X[col]):
                 X[col] = X[col].astype(str).fillna("__MISSING__")
                 X[col] = OrdinalEncoder(
@@ -163,7 +168,6 @@ class FeatureTargetAnalyzer:
                 median_val = X[col].median()
                 X[col] = X[col].fillna(0.0 if np.isnan(median_val) else median_val)
 
-        # Format target
         if self.target_type == "classification":
             y_encoded = pd.factorize(y)[0]
             mi_scores = mutual_info_classif(
@@ -212,21 +216,22 @@ class FeatureTargetAnalyzer:
         collinear_pairs = self._extract_collinear_pairs(p_matrix, s_matrix)
 
         associations: dict[str, TargetAssociation] = {}
-        for feat in self.features:
-            is_num = pd.api.types.is_numeric_dtype(
-                self.df[feat]
-            ) and not pd.api.types.is_bool_dtype(self.df[feat])
-            num_stats = target_numeric_stats.get(feat, {})
+        if self.target is not None:
+            for feat in self.features:
+                is_num = pd.api.types.is_numeric_dtype(
+                    self.df[feat]
+                ) and not pd.api.types.is_bool_dtype(self.df[feat])
+                num_stats = target_numeric_stats.get(feat, {})
 
-            associations[feat] = TargetAssociation(
-                feature=feat,
-                is_numeric=is_num,
-                pearson_corr=num_stats.get("pearson_corr"),
-                pearson_p_value=num_stats.get("pearson_p_value"),
-                spearman_corr=num_stats.get("spearman_corr"),
-                spearman_p_value=num_stats.get("spearman_p_value"),
-                mutual_info=mi_scores.get(feat),
-            )
+                associations[feat] = TargetAssociation(
+                    feature=feat,
+                    is_numeric=is_num,
+                    pearson_corr=num_stats.get("pearson_corr"),
+                    pearson_p_value=num_stats.get("pearson_p_value"),
+                    spearman_corr=num_stats.get("spearman_corr"),
+                    spearman_p_value=num_stats.get("spearman_p_value"),
+                    mutual_info=mi_scores.get(feat),
+                )
 
         return CorrelationReport(
             target=self.target,

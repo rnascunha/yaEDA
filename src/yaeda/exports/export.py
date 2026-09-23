@@ -16,12 +16,14 @@ class StructuredDataExporter:
         importance_report: Any,
         cluster_report: list[Any] | Any | None = None,
         diagnostic_report: list[Any] | Any | None = None,
+        multi_profile: Any | None = None,
     ):
         self.tp = table_profile
         self.cr = corr_report
         self.ir = importance_report
         self.clr = cluster_report
         self.dr = diagnostic_report
+        self.mp = multi_profile
 
     def export_json(self, output_path: str | Path | None = None) -> dict[str, Any]:
         # Support list[ClusterReport] or single ClusterReport
@@ -40,8 +42,23 @@ class StructuredDataExporter:
             elif hasattr(self.dr, "to_dict"):
                 diagnostic_payload = self.dr.to_dict()
 
+        # Serialize secondary datasets if present
+        secondary_payload = None
+        if self.mp is not None and getattr(self.mp, "secondary_profiles", None):
+            secondary_payload = {
+                sec_name: {
+                    "dataset_name": sec_profile.dataset_name,
+                    "n_rows": sec_profile.n_rows,
+                    "n_columns": sec_profile.n_columns,
+                    "features": {k: asdict(v) for k, v in sec_profile.features.items()},
+                    "comparison": [asdict(comp) for comp in self.mp.comparisons.get(sec_name, [])],
+                }
+                for sec_name, sec_profile in self.mp.secondary_profiles.items()
+            }
+
         payload = {
             "metadata": {
+                "dataset_name": getattr(self.tp, "dataset_name", "Primary"),
                 "generated_at": datetime.datetime.now().isoformat(),  # noqa: DTZ005
                 "n_rows": self.tp.n_rows,
                 "n_columns": self.tp.n_columns,
@@ -55,6 +72,7 @@ class StructuredDataExporter:
                 "column_dtypes": self.tp.column_dtypes,
                 "features": {k: asdict(v) for k, v in self.tp.features.items()},
             },
+            "secondary_datasets": secondary_payload,
             "correlation_analysis": {
                 "target_associations": {
                     k: asdict(v) for k, v in self.cr.target_associations.items()

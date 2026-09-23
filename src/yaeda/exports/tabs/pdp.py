@@ -14,6 +14,7 @@ class PDPTab(HTMLTab):
         importance_report: FeatureImportanceReport,
         cg: EDAChartGenerator,
         features: list[str],
+        has_target: bool,
     ):
         super().__init__("pdp", "📈 Partial Dependence")
         self.tp = table_profile
@@ -21,9 +22,10 @@ class PDPTab(HTMLTab):
         self.ir = importance_report
         self.cg = cg
         self.features = features
+        self.has_target = has_target
 
     def has_report(self) -> bool:
-        return True
+        return self.has_target
 
     def _build_pdp_tab_html(self, b64_pdp: str) -> str:
         rows = []

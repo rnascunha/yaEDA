@@ -15,7 +15,7 @@ class ClusterCharacteristic:
     feature: str
     cluster_mean: float
     global_mean: float
-    z_difference: float  # How many standard deviations this cluster deviates from the dataset mean
+    z_difference: float
 
 
 @dataclass
@@ -31,11 +31,11 @@ class ClusterProfile:
 @dataclass
 class ClusterReport:
     n_clusters: int
-    target: str
-    target_type: Literal["classification", "regression"]
+    target: str | None
+    target_type: Literal["classification", "regression"] | None
     silhouette_score: float
     inertia: float
-    mutual_info_with_target: float
+    mutual_info_with_target: float | None
     clusters: list[ClusterProfile]
     cluster_labels: list[int] = field(default_factory=list, repr=False)
     pca_coordinates: list[list[float]] = field(default_factory=list, repr=False)
@@ -48,14 +48,14 @@ class ClusterReport:
 
 
 class TabularClusterAnalyzer:
-    """Segments instances via KMeans, measures target predictability, and extracts centroid profiles."""
+    """Segments instances via KMeans, measures space separation, and profiles centroids."""
 
     def __init__(
         self,
         df: pd.DataFrame,
-        target: str,
+        target: str | None = None,
         features: list[str] | None = None,
-        target_type: Literal["classification", "regression"] = "regression",
+        target_type: Literal["classification", "regression"] | None = "regression",
         n_clusters: int = 4,
         random_state: int = 42,
     ):
@@ -70,10 +70,24 @@ class TabularClusterAnalyzer:
         else:
             self.features = [col for col in df.columns if col != target]
 
-    def _preprocess(self) -> tuple[np.ndarray, list[str], pd.Series]:
-        valid_df = (
-            self.df[self.features + [self.target]].dropna(subset=[self.target]).copy()
+    def _preprocess(self) -> tuple[np.ndarray, list[str], pd.Series | None]:
+        if self.target and self.target in self.df.columns:
+            cols = self.features + [self.target]
+            valid_df = self.df[cols].dropna(subset=[self.target]).copy()
+            target_s = valid_df[self.target]
+        else:
+            valid_df = self.df[self.features].copy()
+            target_s = None
+
+        cols = self.features + (
+            [self.target] if self.target and self.target in self.df.columns else []
         )
+        if self.target and self.target in self.df.columns:
+            valid_df = self.df[cols].dropna(subset=[self.target]).copy()
+            target_s = valid_df[self.target]
+        else:
+            valid_df = self.df[self.features].copy()
+            target_s = None
 
         num_cols = [
             c
@@ -103,7 +117,7 @@ class TabularClusterAnalyzer:
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X_raw)
 
-        return X_scaled, ordered_names, valid_df[self.target]
+        return X_scaled, ordered_names, target_s
 
     def run(self) -> ClusterReport:
         X_scaled, feature_names, target_s = self._preprocess()
@@ -117,31 +131,30 @@ class TabularClusterAnalyzer:
         if n_samples > 2000:
             rng = np.random.RandomState(self.random_state)
             sample_idx = rng.choice(n_samples, size=2000, replace=False)
-            sil_score = float(
-                silhouette_score(X_scaled[sample_idx], cluster_labels[sample_idx])
-            )
+            sil_score = float(silhouette_score(X_scaled[sample_idx], cluster_labels[sample_idx]))
         else:
             sil_score = float(silhouette_score(X_scaled, cluster_labels))
 
-        # 2D PCA projection for space inspection
+        # 2D PCA projection
         pca = PCA(n_components=2, random_state=self.random_state)
         pca_coords = pca.fit_transform(X_scaled)
 
-        # Mutual Information between cluster label and target
-        clusters_2d = cluster_labels.reshape(-1, 1)
-        if self.target_type == "classification":
-            y_enc = pd.factorize(target_s)[0]
-            mi_score = float(
-                mutual_info_classif(clusters_2d, y_enc, random_state=self.random_state)[
-                    0
-                ]
-            )
-        else:
-            mi_score = float(
-                mutual_info_regression(
-                    clusters_2d, target_s.astype(float), random_state=self.random_state
-                )[0]
-            )
+        # Mutual Information with target if target exists
+        mi_score = None
+        if target_s is not None and self.target_type is not None:
+            clusters_2d = cluster_labels.reshape(-1, 1)
+            if self.target_type == "classification":
+                y_enc = pd.factorize(target_s)[0]
+                mi_score = float(
+                    mutual_info_classif(clusters_2d, y_enc, random_state=self.random_state)[0]
+                )
+            else:
+                mi_score = float(
+                    mutual_info_regression(
+                        clusters_2d, target_s.astype(float), random_state=self.random_state
+                    )[0]
+                )
+            mi_score = round(mi_score, 4)
 
         # Feature characterization per cluster
         global_means = X_scaled.mean(axis=0)
@@ -152,19 +165,17 @@ class TabularClusterAnalyzer:
             mask = cluster_labels == c_id
             c_size = int(np.sum(mask))
             c_pct = round((c_size / n_samples) * 100, 2)
-            c_target = target_s[mask]
 
             t_mean = None
             t_dist = {}
-            if self.target_type == "regression":
-                t_mean = round(float(c_target.astype(float).mean()), 4)
-            else:
-                counts = c_target.value_counts(normalize=True)
-                t_dist = {
-                    str(val): round(float(pct) * 100, 2) for val, pct in counts.items()
-                }
+            if target_s is not None and self.target_type is not None:
+                c_target = target_s[mask]
+                if self.target_type == "regression":
+                    t_mean = round(float(c_target.astype(float).mean()), 4)
+                else:
+                    counts = c_target.value_counts(normalize=True)
+                    t_dist = {str(val): round(float(pct) * 100, 2) for val, pct in counts.items()}
 
-            # Identify features with largest standardized displacement
             c_means = X_scaled[mask].mean(axis=0)
             z_diffs = (c_means - global_means) / global_stds
 
@@ -196,7 +207,7 @@ class TabularClusterAnalyzer:
             target_type=self.target_type,
             silhouette_score=round(sil_score, 4),
             inertia=round(float(kmeans.inertia_), 2),
-            mutual_info_with_target=round(mi_score, 4),
+            mutual_info_with_target=mi_score,
             clusters=cluster_profiles,
             cluster_labels=cluster_labels.tolist(),
             pca_coordinates=pca_coords.tolist(),
@@ -207,21 +218,18 @@ class TabularClustersCall:
     def __init__(
         self,
         df: pd.DataFrame,
-        target: str,
+        target: str | None = None,
         features: list[str] | None = None,
-        target_type: Literal["classification", "regression"] = "regression",
+        target_type: Literal["classification", "regression"] | None = "regression",
         n_clusters: list[int] | None = None,
         random_state: int = 42,
     ):
-        # keep unique and ordered list, and minimal value of 2
         n_clusters = n_clusters if n_clusters is not None else [4]
         n_clusters = list(dict.fromkeys([max(2, clu) for clu in n_clusters]))
         if not n_clusters:
             raise Exception("No cluster defined")  # noqa: TRY002
         self._analyzers = {
-            clu: TabularClusterAnalyzer(
-                df, target, features, target_type, clu, random_state
-            )
+            clu: TabularClusterAnalyzer(df, target, features, target_type, clu, random_state)
             for clu in n_clusters
         }
 

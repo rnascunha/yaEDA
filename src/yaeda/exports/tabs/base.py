@@ -8,7 +8,7 @@ class HTMLTab(ABC):
 
     @property
     def head(self) -> str:
-        if not self.has_report:
+        if not self.has_report():
             return ""
 
         return f"""<button id="button-tab-{self._id}" class="tab-btn" onclick="switchTab('tab-{self._id}', event)">
