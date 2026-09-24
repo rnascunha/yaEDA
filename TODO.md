@@ -5,6 +5,7 @@
   - ~~Add screenshots~~
   - ~~Add links to HTML/JSON output~~
   - Say that it can take time
+  - Add model diagnostics screenshot
 - ~~Add examples~~
 
 ## UI
@@ -16,6 +17,7 @@
 
 ## Functionalities
 
+- Performance issues
 - ~~Target optional~~
 - Make selectable what to compute
 - ~~Load to datasets (train and test) to compare~~
@@ -24,7 +26,10 @@
   - Name
   - ~~Date run~~
 - Logging
+- Clusters: add parameters to compare when more than one cluster (sihlouete graph)
+- Clear test warnings
 
 ## Bugs
 
 - How to deal with objects?
+- Check cluster numbers bug.

@@ -1,8 +1,14 @@
 from dataclasses import asdict, dataclass, field
+import importlib.util
 from typing import Any, Literal
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import partial_dependence, permutation_importance
 from sklearn.model_selection import train_test_split
@@ -14,6 +20,36 @@ try:
     HAS_SHAP = True
 except ImportError:
     HAS_SHAP = False
+
+HAS_LIGHTGBM = importlib.util.find_spec("lightgbm") is not None
+if HAS_LIGHTGBM:
+    import lightgbm as lgb
+
+
+def _subsample_xy(
+    X: np.ndarray,
+    y: np.ndarray,
+    max_samples: int | None,
+    is_classification: bool = False,
+    random_state: int = 42,
+) -> tuple[np.ndarray, np.ndarray]:
+    if max_samples is None or len(y) <= max_samples:
+        return X, y
+
+    if is_classification:
+        counts = pd.Series(y).value_counts()
+        if (counts >= 2).all() and len(counts) < max_samples:
+            try:
+                X_sub, _, y_sub, _ = train_test_split(
+                    X, y, train_size=max_samples, random_state=random_state, stratify=y
+                )
+                return X_sub, y_sub
+            except Exception:  # noqa: S110
+                pass
+
+    rng = np.random.RandomState(random_state)
+    idx = rng.choice(len(y), size=max_samples, replace=False)
+    return X[idx], y[idx]
 
 
 @dataclass
@@ -61,17 +97,25 @@ class FeatureImportanceAnalyzer:
         target: str | None = None,
         features: list[str] | None = None,
         target_type: Literal["classification", "regression"] | None = None,
+        model_engine: Literal["auto", "lightgbm", "extra_trees", "random_forest"] = "auto",
         mi_scores: dict[str, float] | None = None,
         test_size: float = 0.25,
-        shap_sample_limit: int = 500,
+        fit_sample_limit: int | None = 25000,
+        permutation_sample_limit: int | None = 10000,
+        mi_sample_limit: int | None = 25000,
+        shap_sample_limit: int | None = 500,
         random_state: int = 42,
     ):
         if target is not None and target not in df.columns:
             raise ValueError(f"Target column '{target}' not in DataFrame.")
 
         self.target = target
+        self.model_engine = model_engine
         self.test_size = test_size
-        self.shap_sample_limit = shap_sample_limit
+        self.fit_sample_limit = fit_sample_limit
+        self.permutation_sample_limit = permutation_sample_limit
+        self.mi_sample_limit = mi_sample_limit
+        self.shap_sample_limit = shap_sample_limit or 500
         self.random_state = random_state
         self.mi_scores = mi_scores or {}
 
@@ -133,57 +177,105 @@ class FeatureImportanceAnalyzer:
         X = np.hstack(processed_parts)
         return X, y, ordered_feature_names
 
+    def _build_model(self):
+        engine = self.model_engine
+        if engine == "auto":
+            engine = "lightgbm" if HAS_LIGHTGBM else "extra_trees"
+
+        is_classif = self.target_type == "classification"
+
+        if engine == "lightgbm" and HAS_LIGHTGBM:
+            if is_classif:
+                return lgb.LGBMClassifier(
+                    n_estimators=60,
+                    max_depth=6,
+                    learning_rate=0.08,
+                    random_state=self.random_state,
+                    n_jobs=-1,
+                    verbose=-1,
+                )
+            else:
+                return lgb.LGBMRegressor(
+                    n_estimators=60,
+                    max_depth=6,
+                    learning_rate=0.08,
+                    random_state=self.random_state,
+                    n_jobs=-1,
+                    verbose=-1,
+                )
+        elif engine == "extra_trees":
+            if is_classif:
+                return ExtraTreesClassifier(
+                    n_estimators=60,
+                    max_depth=7,
+                    random_state=self.random_state,
+                    n_jobs=-1,
+                )
+            else:
+                return ExtraTreesRegressor(
+                    n_estimators=60,
+                    max_depth=7,
+                    random_state=self.random_state,
+                    n_jobs=-1,
+                )
+        else:  # random_forest
+            if is_classif:
+                return RandomForestClassifier(
+                    n_estimators=60,
+                    max_depth=7,
+                    random_state=self.random_state,
+                    n_jobs=-1,
+                )
+            else:
+                return RandomForestRegressor(
+                    n_estimators=60,
+                    max_depth=7,
+                    random_state=self.random_state,
+                    n_jobs=-1,
+                )
+
     def _fit_model(self, X_train: np.ndarray, y_train: np.ndarray):
-        if self.target_type == "classification":
-            model = RandomForestClassifier(
-                n_estimators=100,
-                max_depth=8,
-                random_state=self.random_state,
-                n_jobs=-1,
-            )
-        else:
-            model = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=8,
-                random_state=self.random_state,
-                n_jobs=-1,
-            )
+        model = self._build_model()
         model.fit(X_train, y_train)
         return model
 
     def _compute_attributions(self, model: Any, X: np.ndarray) -> tuple[np.ndarray, str]:
         if HAS_SHAP:
-            explainer = shap.TreeExplainer(model)
-            sample_size = min(len(X), self.shap_sample_limit)
-            sample_idx = np.random.RandomState(self.random_state).choice(
-                len(X), size=sample_size, replace=False
-            )
-            shap_values = explainer.shap_values(X[sample_idx])
-
-            if isinstance(shap_values, list):
-                attribution = np.mean([np.abs(c).mean(axis=0) for c in shap_values], axis=0)
-            elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
-                attribution = np.abs(shap_values).mean(axis=(0, 2))
-            else:
-                vals = getattr(shap_values, "values", shap_values)
-                attribution = (
-                    np.abs(vals).mean(axis=(0, 2)) if vals.ndim == 3 else np.abs(vals).mean(axis=0)
+            try:
+                explainer = shap.TreeExplainer(model)
+                sample_size = min(len(X), self.shap_sample_limit)
+                sample_idx = np.random.RandomState(self.random_state).choice(
+                    len(X), size=sample_size, replace=False
                 )
+                shap_values = explainer.shap_values(X[sample_idx])
 
-            return attribution, "SHAP (mean |value|)"
-        else:
-            variances = []
-            sample_size = min(len(X), 300)
-            X_sub = X[:sample_size]
-            for feat_idx in range(X.shape[1]):
-                try:
-                    pdp_res = partial_dependence(
-                        model, X_sub, features=[feat_idx], grid_resolution=15
+                if isinstance(shap_values, list):
+                    attribution = np.mean([np.abs(c).mean(axis=0) for c in shap_values], axis=0)
+                elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+                    attribution = np.abs(shap_values).mean(axis=(0, 2))
+                else:
+                    vals = getattr(shap_values, "values", shap_values)
+                    attribution = (
+                        np.abs(vals).mean(axis=(0, 2))
+                        if vals.ndim == 3
+                        else np.abs(vals).mean(axis=0)
                     )
-                    variances.append(float(np.var(pdp_res["average"])))
-                except Exception:
-                    variances.append(0.0)
-            return np.array(variances), "PDP Sensitivity Variance"
+
+                return attribution, "SHAP (mean |value|)"
+            except Exception:  # noqa: S110
+                pass  # Fall through to PDP sensitivity variance
+
+        # Fallback sensitivity variance
+        variances = []
+        sample_size = min(len(X), 300)
+        X_sub = X[:sample_size]
+        for feat_idx in range(X.shape[1]):
+            try:
+                pdp_res = partial_dependence(model, X_sub, features=[feat_idx], grid_resolution=15)
+                variances.append(float(np.var(pdp_res["average"])))
+            except Exception:
+                variances.append(0.0)
+        return np.array(variances), "PDP Sensitivity Variance"
 
     def run(self) -> FeatureImportanceReport:
         if self.target is None or self.target not in self.df.columns:
@@ -199,29 +291,32 @@ class FeatureImportanceAnalyzer:
             )
 
         X, y, ordered_features = self._preprocess_data()
+        is_classif = self.target_type == "classification"
 
         if len(y) < 20:
             X_train, X_val, y_train, y_val = X, X, y, y
         else:
-            stratify = (
-                y
-                if self.target_type == "classification" and pd.Series(y).value_counts().min() > 1
-                else None
-            )
+            stratify = y if is_classif and pd.Series(y).value_counts().min() > 1 else None
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.test_size, random_state=self.random_state, stratify=stratify
             )
 
-        model = self._fit_model(X_train, y_train)
-        tree_mdi = model.feature_importances_
-
-        scoring = (
-            "roc_auc" if (self.target_type == "classification" and len(np.unique(y)) == 2) else None
+        # 1. Fit model on subsampled data
+        X_train_fit, y_train_fit = _subsample_xy(
+            X_train, y_train, self.fit_sample_limit, is_classif, self.random_state
         )
+        model = self._fit_model(X_train_fit, y_train_fit)
+        tree_mdi = getattr(model, "feature_importances_", np.ones(len(ordered_features)))
+
+        # 2. Permutation importance on subsampled validation set
+        X_val_perm, y_val_perm = _subsample_xy(
+            X_val, y_val, self.permutation_sample_limit, is_classif, self.random_state
+        )
+        scoring = "roc_auc" if (is_classif and len(np.unique(y)) == 2) else None
         perm_res = permutation_importance(
             model,
-            X_val,
-            y_val,
+            X_val_perm,
+            y_val_perm,
             n_repeats=5,
             random_state=self.random_state,
             scoring=scoring,
@@ -230,6 +325,7 @@ class FeatureImportanceAnalyzer:
         perm_mean = np.maximum(perm_res.importances_mean, 0.0)
         perm_std = perm_res.importances_std
 
+        # 3. Attributions (Tree SHAP or PDP variance)
         attributions, attr_method = self._compute_attributions(model, X)
 
         def normalize(arr: np.ndarray) -> np.ndarray:
@@ -240,14 +336,22 @@ class FeatureImportanceAnalyzer:
         norm_perm = normalize(perm_mean)
         norm_attr = normalize(attributions)
 
+        # 4. Mutual Information
         mi_dict = getattr(self, "mi_scores", None)
         if not mi_dict:
             from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 
-            if self.target_type == "classification":
-                mi_vals = mutual_info_classif(X_train, y_train, random_state=self.random_state)
+            X_train_mi, y_train_mi = _subsample_xy(
+                X_train, y_train, self.mi_sample_limit, is_classif, self.random_state
+            )
+            if is_classif:
+                mi_vals = mutual_info_classif(
+                    X_train_mi, y_train_mi, random_state=self.random_state
+                )
             else:
-                mi_vals = mutual_info_regression(X_train, y_train, random_state=self.random_state)
+                mi_vals = mutual_info_regression(
+                    X_train_mi, y_train_mi, random_state=self.random_state
+                )
             mi_dict = {feat: float(score) for feat, score in zip(ordered_features, mi_vals)}
             self.mi_scores = mi_dict
 

@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 
 @dataclass
@@ -278,12 +279,24 @@ class MultiDatasetProfiler:
         target: str | None = None,
         primary_name: str = "Primary",
         features: list[str] | None = None,
+        n_jobs: int = -1,
     ):
         self.primary_df = primary_df
         self.secondary_dfs = secondary_dfs
         self.target = target
         self.primary_name = primary_name
         self.features = features
+        self.n_jobs = n_jobs
+
+    def _profile_single_secondary(
+        self, sec_name: str, sec_df: pd.DataFrame
+    ) -> tuple[str, TableProfile]:
+        sec_profiler = TabularDataProfiler(
+            df=sec_df,
+            target=self.target if (self.target and self.target in sec_df.columns) else None,
+            dataset_name=sec_name,
+        )
+        return sec_name, sec_profiler.run()
 
     def run(self) -> MultiTableProfile:
         primary_profiler = TabularDataProfiler(
@@ -294,19 +307,23 @@ class MultiDatasetProfiler:
         )
         primary_profile = primary_profiler.run()
 
-        secondary_profiles: dict[str, TableProfile] = {}
+        # Concurrently profile all secondary datasets
+        n_jobs_eff = self.n_jobs if (len(self.secondary_dfs) > 1 and self.n_jobs != 1) else 1
+        if n_jobs_eff == 1:
+            sec_items = [
+                self._profile_single_secondary(name, d) for name, d in self.secondary_dfs.items()
+            ]
+        else:
+            sec_items = Parallel(n_jobs=n_jobs_eff, prefer="threads")(
+                delayed(self._profile_single_secondary)(name, d)
+                for name, d in self.secondary_dfs.items()
+            )
+
+        secondary_profiles: dict[str, TableProfile] = dict(sec_items)
         comparisons: dict[str, list[FeatureComparison]] = {}
 
-        for sec_name, sec_df in self.secondary_dfs.items():
-            sec_profiler = TabularDataProfiler(
-                df=sec_df,
-                target=self.target if (self.target and self.target in sec_df.columns) else None,
-                dataset_name=sec_name,
-            )
-            sec_profile = sec_profiler.run()
-            secondary_profiles[sec_name] = sec_profile
-
-            # Compare features against primary
+        for sec_name, sec_profile in secondary_profiles.items():
+            sec_df = self.secondary_dfs[sec_name]
             feat_comps: list[FeatureComparison] = []
             all_cols = list(
                 dict.fromkeys(

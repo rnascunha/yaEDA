@@ -24,6 +24,7 @@ class FeaturesTab(HTMLTab):
         has_secondary: bool,
         has_target: bool,
         primary_name: str,
+        max_features_to_plot: int | None,
     ):
         super().__init__("features", "🔍 Feature & Target Deep Dive")
         self.tp = table_profile
@@ -37,6 +38,7 @@ class FeaturesTab(HTMLTab):
         self.secondary_dfs = secondary_dfs
         self.has_target = has_target
         self.primary_name = primary_name
+        self.max_features_to_plot = max_features_to_plot
 
     def has_report(self) -> str:
         return True
@@ -63,14 +65,31 @@ class FeaturesTab(HTMLTab):
         remaining = [f for f in self.tp.features if f != target_name and f not in importance_order]
         ordered_feats.extend(importance_order + remaining)
 
+        # Truncate card rendering if max_features_to_plot is configured
+        total_feats_available = len(ordered_feats)
+        notice_html = ""
+        if (
+            self.max_features_to_plot is not None
+            and total_feats_available > self.max_features_to_plot
+        ):
+            ordered_feats = ordered_feats[: self.max_features_to_plot]
+            notice_html = f"""
+            <div class="alert" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; margin-bottom:16px;">
+                ⚡ Performance limit active: Rendering top <strong>{len(ordered_feats)}</strong> of <strong>{total_feats_available}</strong> features.
+                Configure <code>max_features_to_plot</code> to view more.
+            </div>
+            """
+
         imp_lookup = {m.feature: m for m in self.ir.importances}
 
-        # Build feature comparison lookup if secondary datasets exist
         comp_lookup: dict[str, list[Any]] = {}
         if self.multi_profile:
             for sec_name, comp_list in self.multi_profile.comparisons.items():
                 for c in comp_list:
                     comp_lookup.setdefault(c.feature, []).append((sec_name, c))
+
+        for feat in ordered_feats:
+            p = self.tp.features[feat]
 
         for feat in ordered_feats:
             p = self.tp.features[feat]
@@ -193,7 +212,7 @@ class FeaturesTab(HTMLTab):
             """
             cards_html.append(card)
 
-        return "\n".join(cards_html)
+        return notice_html + "\n".join(cards_html)
 
     def _generate(self) -> str:
         feature_cards_tab_content = self._build_feature_cards_html()

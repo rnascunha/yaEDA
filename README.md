@@ -1,6 +1,6 @@
 # yaEDA: Yet Another EDA 🚀
 
-[![CI](https://github.com/your-username/yaEDA/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/yaEDA/actions)
+[![CI](https://github.com/your-username/yaEDA/actions/workflows/ci.yml/badge.svg)](https://github.com/rnascunha/yaEDA/actions)
 [![PyPI version](https://img.shields.io/pypi/v/yaeda.svg)](https://pypi.org/project/yaeda/)
 [![Python versions](https://img.shields.io/pypi/pyversions/yaeda.svg)](https://pypi.org/project/yaeda/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -80,6 +80,70 @@ Pass model predictions to partition failure cohorts (False Positives, False Nega
 
 ---
 
+## Performance & Resource Optimization
+
+> [!CAUTION]
+> **Compute & Memory Resource Advisory**: Tabular feature intelligence tasks—especially pairwise arithmetic interactions ($\binom{D}{2} \times 5$ combinations), nearest-neighbor Mutual Information, and tree permutation loops—scale superlinearly with row count ($N$) and feature count ($D$). Running unconstrained deep diagnostics on large ($N > 100\text{k}$) or wide ($D > 50$) tables can result in high CPU utilization, memory pressure, and large HTML report files. Use the settings below to balance speed and diagnostic depth.
+
+yaEDA is engineered with multi-tiered performance controls: basic statistical profiling (distributions, health, missingness) always runs across 100% of data via fast vectorized operations, while heavy diagnostic routines are governed by presets, subsampling limits, and parallel engines.
+
+### 1. Execution Presets (`preset`)
+
+Control pipeline depth with a single flag:
+
+```python
+eda = TabularEDA(df=train_df, target="target", preset="standard")
+```
+
+| Preset         | Profiling & Health | Correlation Matrix | Golden Features | Clustering (k) | Pairwise Interactions | PDP / ICE Curves | Recommended Use Case                             |
+| -------------- | ------------------ | ------------------ | --------------- | -------------- | --------------------- | ---------------- | ------------------------------------------------ |
+| """minimal"""  | ✅ Full            | ❌                 | ❌              | ❌             | ❌                    | ❌               | Millions of rows; sub-second health checks.      |
+| """standard""" | ✅ Full            | ✅ Full            | ✅ Fast         | ✅             | ❌                    | ❌               | Default recommendation for large datasets.       |
+| """deep"""     | ✅ Full            | ✅ Full            | ✅ Full         | ✅             | ✅ Full               | ✅ Full          | Deep exploration; competition feature discovery. |
+
+> Any preset can be overridden with explicit toggles (`enable_interactions=False`, `enable_clustering=False`, `enable_pdp=False`, etc.).
+
+### Statistical Subsampling Limits
+
+Representative sample limits cap compute-heavy routines without sacrificing statistical significance. Set any limit to None to force 100% data usage:
+
+- `fit_sample_limit` (default: `25_000`): Maximum rows used for training tree importance models.
+- `permutation_sample_limit` (default: `10_000`): Maximum validation rows passed to permutation loss loops.
+- `mi_sample_limit` (default: `25_000`): Limits sample size for $O(N \log N)$ nearest-neighbor Mutual Information queries.
+- `clustering_sample_limit` (default: `30_000`): Limits rows partitioned by KMeans and projected in PCA space.
+- `interaction_sample_limit` (default: `25_000`): Caps evaluation matrix when testing arithmetic synergies.
+- `shap_sample_limit` (default: `500`): Samples passed to Tree SHAP matrix calculations.
+
+### Model Engine (`model_engine`)
+
+Select the model architecture used for feature importance and PDP curves:
+
+- `"auto"` (default): Automatically uses `LightGBM` if installed; otherwise falls back to `ExtraTrees` for zero-dependency speed.
+
+* `"lightgbm"`: Histogram-based gradient boosting. Delivers a $15\times - 30\times$ speedup and significantly lower RAM usage on large datasets. Install via `pip install "yaeda[fast]"`.
+* `"extra_trees"`: Fast randomized decision trees via scikit-learn ($5\times - 10\times$ faster than standard Random Forest).
+* `"random_forest"`: Standard scikit-learn Random Forest.
+
+### Parallel Execution (`n_jobs`)
+
+yaEDA parallelizes column-wise Mutual Information estimation, multi-$k$ KMeans clustering, secondary dataset profiling, and multi-model diagnostics across CPU threads:
+
+```python
+eda = TabularEDA(
+    df=train_df,
+    target="target",
+    n_jobs=-1,  # Uses all available CPU cores (set to 1 for serial execution)
+)
+```
+
+### Visual Card Limiting (`max_features_to_plot`)
+
+For wide datasets with dozens or hundreds of columns, rendering every feature card generates hundreds of embedded visual canvases, resulting in heavy HTML files. Cap card rendering to the top predictors:
+
+```python
+eda.to_html("report.html", max_features_to_plot=20)
+```
+
 ## Installation
 
 Install using `pip`:
@@ -88,17 +152,20 @@ Install using `pip`:
 # Core package (lightweight, zero heavy binary dependencies)
 $ pip install yaeda
 
+# With high-speed LightGBM engine
+$ pip install "yaeda[fast]"
+
 # With SHAP model interpretability support
 $ pip install "yaeda[shap]"
 
-# Full installation (SHAP + WeasyPrint PDF export)
+# Full installation (LightGBM + SHAP + WeasyPrint PDF export)
 $ pip install "yaeda[all]"
 ```
 
 Or add via `uv`:
 
 ```bash
-$ uv add yaeda --extra shap
+$ uv add yaeda --extra allu
 ```
 
 ## Quickstart

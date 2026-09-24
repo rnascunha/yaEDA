@@ -31,6 +31,21 @@ def test_feature_importance_regression(regression_df):
     report = analyzer.run()
 
     assert report.target_type == "regression"
-    assert report.model_type == "RandomForestRegressor"
+    assert report.model_type in ["LGBMRegressor", "ExtraTreesRegressor", "RandomForestRegressor"]
+    assert len(report.importances) > 0
+    assert report.fitted_model is not None
     top_feature = report.importances[0].feature
     assert top_feature in ["feat_num1", "feat_num2"]
+
+
+def test_feature_importance_classification(classification_df):
+    analyzer = FeatureImportanceAnalyzer(
+        df=classification_df,
+        target="target",
+        target_type="classification",
+    )
+    report = analyzer.run()
+
+    assert report.model_type in ["LGBMClassifier", "ExtraTreesClassifier", "RandomForestClassifier"]
+    assert len(report.importances) > 0
+    assert report.fitted_model is not None

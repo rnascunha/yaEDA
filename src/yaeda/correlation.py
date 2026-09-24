@@ -1,10 +1,12 @@
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
-from sklearn.preprocessing import OrdinalEncoder
+from sklearn.feature_selection._mutual_info import _compute_mi, _iterate_columns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OrdinalEncoder, scale
 
 
 @dataclass
@@ -40,7 +42,7 @@ class CorrelationReport:
 
 
 class FeatureTargetAnalyzer:
-    """Computes bivariate associations and feature-target relationships."""
+    """Computes bivariate associations, inter-feature collinearity, and target relationships."""
 
     def __init__(
         self,
@@ -49,6 +51,8 @@ class FeatureTargetAnalyzer:
         features: list[str] | None = None,
         target_type: Literal["classification", "regression"] | None = None,
         collinear_threshold: float = 0.80,
+        mi_sample_limit: int | None = 25000,
+        n_jobs: int = -1,
         random_state: int = 42,
     ):
         if target is not None and target not in df.columns:
@@ -56,9 +60,10 @@ class FeatureTargetAnalyzer:
 
         self.target = target
         self.collinear_threshold = collinear_threshold
+        self.mi_sample_limit = mi_sample_limit
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
-        # Resolve features
         if features is not None:
             self.features = [f for f in features if f != target and f in df.columns]
         else:
@@ -79,7 +84,6 @@ class FeatureTargetAnalyzer:
             target_series
         )
         unique_count = target_series.nunique()
-
         if not is_num or unique_count <= 10 or pd.api.types.is_bool_dtype(target_series):
             return "classification"
         return "regression"
@@ -150,6 +154,30 @@ class FeatureTargetAnalyzer:
         X = self.df[self.features].copy()
         y = self.df[self.target].copy()
 
+        # Stratified / random subsampling for Mutual Information k-NN scaling
+        if self.mi_sample_limit is not None and len(X) > self.mi_sample_limit:
+            stratify = None
+            if self.target_type == "classification":
+                val_counts = y.value_counts()
+                if (val_counts >= 2).all() and len(val_counts) < self.mi_sample_limit:
+                    stratify = y
+            try:
+                if stratify is not None:
+                    X, _, y, _ = train_test_split(
+                        X,
+                        y,
+                        train_size=self.mi_sample_limit,
+                        random_state=self.random_state,
+                        stratify=stratify,
+                    )
+                else:
+                    rng = np.random.RandomState(self.random_state)
+                    sample_idx = rng.choice(len(X), size=self.mi_sample_limit, replace=False)
+                    X = X.iloc[sample_idx].copy()
+                    y = y.iloc[sample_idx].copy()
+            except Exception:  # noqa: S110
+                pass
+
         discrete_mask: list[bool] = []
         for col in self.features:
             is_discrete = not (
@@ -168,21 +196,42 @@ class FeatureTargetAnalyzer:
                 median_val = X[col].median()
                 X[col] = X[col].fillna(0.0 if np.isnan(median_val) else median_val)
 
-        if self.target_type == "classification":
-            y_encoded = pd.factorize(y)[0]
-            mi_scores = mutual_info_classif(
-                X,
-                y_encoded,
-                discrete_features=discrete_mask,
-                random_state=self.random_state,
-            )
+        # Prepare X and y arrays for parallel _compute_mi
+        X_mat = X.to_numpy(dtype=np.float64, copy=True)
+        discrete_target = self.target_type == "classification"
+
+        if discrete_target:
+            y_arr = pd.factorize(y)[0]
         else:
-            y_numeric = y.astype(float)
-            mi_scores = mutual_info_regression(
-                X,
-                y_numeric,
-                discrete_features=discrete_mask,
-                random_state=self.random_state,
+            y_arr = scale(y.astype(float).to_numpy(), with_mean=False)
+            rng = np.random.RandomState(self.random_state)
+            y_arr += (
+                1e-10 * np.maximum(1, np.mean(np.abs(y_arr))) * rng.standard_normal(size=len(y_arr))
+            )
+
+        # Add jitter to continuous feature columns to break ties (standard Kraskov procedure)
+        rng = np.random.RandomState(self.random_state)
+        continuous_indices = [i for i, disc in enumerate(discrete_mask) if not disc]
+        if continuous_indices:
+            X_mat[:, continuous_indices] = scale(
+                X_mat[:, continuous_indices], with_mean=False, copy=False
+            )
+            means = np.maximum(1, np.mean(np.abs(X_mat[:, continuous_indices]), axis=0))
+            X_mat[:, continuous_indices] += (
+                1e-10 * means * rng.standard_normal(size=(len(X_mat), len(continuous_indices)))
+            )
+
+        # Parallelize column-by-column mutual information across CPU threads
+        n_jobs_eff = self.n_jobs if (len(self.features) > 1 and self.n_jobs != 1) else 1
+        if n_jobs_eff == 1:
+            mi_scores = [
+                _compute_mi(x_col, y_arr, disc, discrete_target, 3)
+                for x_col, disc in zip(_iterate_columns(X_mat), discrete_mask)
+            ]
+        else:
+            mi_scores = Parallel(n_jobs=n_jobs_eff, prefer="threads")(
+                delayed(_compute_mi)(x_col, y_arr, disc, discrete_target, 3)
+                for x_col, disc in zip(_iterate_columns(X_mat), discrete_mask)
             )
 
         return {feat: round(float(score), 4) for feat, score in zip(self.features, mi_scores)}

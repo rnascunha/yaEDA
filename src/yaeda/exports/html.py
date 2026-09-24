@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Any
 import pandas as pd
 
 from yaeda.charts import EDAChartGenerator
 
-from yaeda.extract import TableProfile
+from yaeda.extract import TableProfile, MultiTableProfile
 from yaeda.feature_importance import FeatureImportanceReport
 from yaeda.interaction import InteractionReport
 from yaeda.correlation import CorrelationReport
@@ -34,15 +33,17 @@ class EDAHTMLDashboardBuilder:
         table_profile: TableProfile,
         corr_report: CorrelationReport,
         importance_report: FeatureImportanceReport,
-        chart_generator: Any | None = None,
+        chart_generator: EDAChartGenerator | None = None,
         df: pd.DataFrame | None = None,
         prominent_features: list[str] | None = None,
         interaction_report: InteractionReport = None,
         cluster_report: list[ClusterReport] | None = None,
         diagnostics_report: ModelDiagnosticsReport | None = None,
-        multi_profile: Any | None = None,
+        multi_profile: MultiTableProfile | None = None,
         secondary_dfs: dict[str, pd.DataFrame] | None = None,
         primary_name: str = "Primary",
+        max_features_to_plot: int | None = None,
+        enable_pdp: bool = True,
     ):
         self.df = df
         self.cg = chart_generator or EDAChartGenerator()
@@ -54,6 +55,9 @@ class EDAHTMLDashboardBuilder:
         self.multi_profile = multi_profile
         self.secondary_dfs = secondary_dfs or {}
         self.primary_name = primary_name
+
+        self.max_features_to_plot = max_features_to_plot
+        self.enable_pdp = enable_pdp
 
         self.has_target = self.tp.target_column is not None
         self.has_secondary = bool(self.secondary_dfs) and (self.multi_profile is not None)
@@ -82,6 +86,7 @@ class EDAHTMLDashboardBuilder:
             self.has_secondary,
             self.has_target,
             self.primary_name,
+            self.max_features_to_plot,
         )
         self.comp_tab = ComparsionTab(
             table_profile, multi_profile, self.has_secondary, self.primary_name, self.cg
@@ -99,9 +104,14 @@ class EDAHTMLDashboardBuilder:
             self.cg,
             self.prominent_features,
             self.has_target,
+            self.enable_pdp,
         )
         self.interaction_tab = InteractionsTab(
-            interaction_report, df, features=self.prominent_features, cg=self.cg
+            interaction_report,
+            df,
+            features=self.prominent_features,
+            cg=self.cg,
+            has_target=self.has_target,
         )
         self.diagnostics_tab = ModelDiagnosticsTab(diagnostics_report, self.cg)
 

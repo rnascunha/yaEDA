@@ -2,6 +2,9 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 import numpy as np
 import pandas as pd
+
+from joblib import Parallel, delayed
+
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -330,9 +333,10 @@ class ModelDiagnosticsCall:
         features: list[str] | None = None,
         target_type: Literal["classification", "regression"] = "classification",
         preprocessed_X: np.ndarray | None = None,
-        max_worst_error: int = 20,
+        n_jobs: int = -1,
         random_state: int = 42,
     ):
+        self.n_jobs = n_jobs
         for i, item in enumerate(inputs):
             if not item.name:
                 item.name = f"Model-{i}"
@@ -344,14 +348,21 @@ class ModelDiagnosticsCall:
                 features=features,
                 target_type=target_type,
                 preprocessed_X=preprocessed_X,
-                max_worst_error=max_worst_error,
                 random_state=random_state,
             )
             for item in inputs
         }
 
-    def analyzers(self):
+    def analyzers(self) -> dict[str, ModelDiagnosticsAnalyzer]:
         return self._analyzers
 
     def run(self) -> dict[str, ModelDiagnosticsReport]:
-        return {name: analyzer.run() for name, analyzer in self._analyzers.items()}
+        if len(self._analyzers) <= 1 or self.n_jobs == 1:
+            return {name: analyzer.run() for name, analyzer in self._analyzers.items()}
+
+        # Concurrently compute error forensics, confusion metrics, and SHAP
+        results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
+            delayed(lambda name, an: (name, an.run()))(name, an)
+            for name, an in self._analyzers.items()
+        )
+        return dict(results)

@@ -14,15 +14,17 @@ class InteractionsTab(HTMLTab):
         df: pd.DataFrame,
         features: list[str],
         cg: EDAChartGenerator,
+        has_target: bool,
     ):
         super().__init__("interactions", "⚡ Feature Interactions")
         self._report = interaction_report
         self.df = df
         self.cg = cg
         self.features = features
+        self.has_target = has_target
 
     def has_report(self) -> str:
-        return self._report is not None
+        return self._report is not None and self.has_target
 
     def _build_interactions_tab_html(
         self,
