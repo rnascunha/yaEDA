@@ -17,7 +17,7 @@
 
 ## Functionalities
 
-- Performance issues
+- ~~Performance issues~~
 - ~~Target optional~~
 - Make selectable what to compute
 - ~~Load to datasets (train and test) to compare~~
