@@ -97,9 +97,9 @@ eda = TabularEDA(df=train_df, target="target", preset="standard")
 
 | Preset         | Profiling & Health | Correlation Matrix | Golden Features | Clustering (k) | Pairwise Interactions | PDP / ICE Curves | Recommended Use Case                             |
 | -------------- | ------------------ | ------------------ | --------------- | -------------- | --------------------- | ---------------- | ------------------------------------------------ |
-| """minimal"""  | ✅ Full            | ❌                 | ❌              | ❌             | ❌                    | ❌               | Millions of rows; sub-second health checks.      |
-| """standard""" | ✅ Full            | ✅ Full            | ✅ Fast         | ✅             | ❌                    | ❌               | Default recommendation for large datasets.       |
-| """deep"""     | ✅ Full            | ✅ Full            | ✅ Full         | ✅             | ✅ Full               | ✅ Full          | Deep exploration; competition feature discovery. |
+| `"minimal"`  | ✅ Full            | ❌                 | ❌              | ❌             | ❌                    | ❌               | Millions of rows; sub-second health checks.      |
+| `"standard"` | ✅ Full            | ✅ Full            | ✅ Fast         | ✅             | ❌                    | ❌               | Default recommendation for large datasets.       |
+| `"deep"`     | ✅ Full            | ✅ Full            | ✅ Full         | ✅             | ✅ Full               | ✅ Full          | Deep exploration; competition feature discovery. |
 
 > Any preset can be overridden with explicit toggles (`enable_interactions=False`, `enable_clustering=False`, `enable_pdp=False`, etc.).
 

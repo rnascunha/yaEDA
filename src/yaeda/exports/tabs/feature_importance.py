@@ -3,13 +3,13 @@ from yaeda.feature_importance import FeatureImportanceReport
 
 
 class FeatureImporanceTab(HTMLTab):
-    def __init__(self, importance_report: FeatureImportanceReport | None, has_target: bool):
+    def __init__(self, importance_report: FeatureImportanceReport | None, enabled: bool):
         super().__init__("golden", "🌟 Golden Features")
         self._report = importance_report
-        self.has_target = has_target
+        self.enabled = enabled
 
     def has_report(self) -> str:
-        return self.has_target and self._report is not None
+        return self.enabled and self._report is not None
 
     def _generate(self) -> str:
         golden_rows = []

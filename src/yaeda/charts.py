@@ -762,6 +762,8 @@ class EDAChartGenerator:
                                     "markerfacecolor": "white",
                                     "markeredgecolor": "#0f172a",
                                 },
+                                hue=target,
+                                legend=False,
                             )
                             ax2.set_title(
                                 f"{feature} by {target} (Box)", fontsize=9.5, fontweight="bold"

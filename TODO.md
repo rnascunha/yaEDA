@@ -4,7 +4,7 @@
   - ~~Highlight that is a in development library~~
   - ~~Add screenshots~~
   - ~~Add links to HTML/JSON output~~
-  - Say that it can take time
+  - ~~Say that it can take time~~
   - Add model diagnostics screenshot
 - ~~Add examples~~
 

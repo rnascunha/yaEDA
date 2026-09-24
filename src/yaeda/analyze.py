@@ -496,6 +496,7 @@ class TabularEDA:
             primary_name=self._df_name,
             max_features_to_plot=card_limit,
             enable_pdp=self.enable_pdp,
+            enable_feature_importance=self.enable_feature_importance,
         )
         return html_builder.generate(
             output_path=output,

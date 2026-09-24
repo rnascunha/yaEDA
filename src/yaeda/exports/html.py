@@ -44,6 +44,7 @@ class EDAHTMLDashboardBuilder:
         primary_name: str = "Primary",
         max_features_to_plot: int | None = None,
         enable_pdp: bool = True,
+        enable_feature_importance: bool = True,
     ):
         self.df = df
         self.cg = chart_generator or EDAChartGenerator()
@@ -92,7 +93,9 @@ class EDAHTMLDashboardBuilder:
             table_profile, multi_profile, self.has_secondary, self.primary_name, self.cg
         )
         self.cr_tab = CollinearTab(corr_report)
-        self.ir_tab = FeatureImporanceTab(importance_report, self.has_target)
+        self.ir_tab = FeatureImporanceTab(
+            importance_report, self.has_target and enable_feature_importance
+        )
         self.cluster_tab = ClusterTab(
             cluster_report, table_profile, corr_report, df, self.cg, self.has_target
         )
