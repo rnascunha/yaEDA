@@ -18,12 +18,12 @@ Unlike standard profiling tools that merely produce univariate histograms, yaEDA
 
 Explore sample reports generated across various real-world execution modes:
 
-| Execution Mode                     | Description                                                                                 |                   Interactive Dashboard                   |                 Machine-Readable Metadata                 |
-| :--------------------------------- | :------------------------------------------------------------------------------------------ | :-------------------------------------------------------: | :-------------------------------------------------------: |
-| **1. Supervised Single Dataset**   | Full supervised profiling with target column, Golden Features, PDP curves, and interactions |  [View HTML](artifacts/exports/1_supervised_single.html)  |  [View JSON](artifacts/exports/1_supervised_single.json)  |
-| **2. Supervised Multi-Dataset**    | Primary (Train with target) vs. Secondary (Test unlabelled), drift tracking & KDE overlays  |  [View HTML](artifacts/exports/2_supervised_multi.html)   |  [View JSON](artifacts/exports/2_supervised_multi.json)   |
-| **3. Unsupervised Single Dataset** | Unlabelled dataset exploration, feature health, and PCA cluster partitioning                | [View HTML](artifacts/exports/3_unsupervised_single.html) | [View JSON](artifacts/exports/3_unsupervised_single.json) |
-| **4. Unsupervised Multi-Dataset**  | Cohort A vs. Cohort B comparative distribution, missingness shift, and novel levels         | [View HTML](artifacts/exports/4_unsupervised_multi.html)  | [View JSON](artifacts/exports/4_unsupervised_multi.json)  |
+| Execution Mode                     | Description                                                                                 |                                              Interactive Dashboard                                               |                                            Machine-Readable Metadata                                             |
+| :--------------------------------- | :------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------: |
+| **1. Supervised Single Dataset**   | Full supervised profiling with target column, Golden Features, PDP curves, and interactions |  [View HTML](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/1_supervised_single.html)  |  [View JSON](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/1_supervised_single.json)  |
+| **2. Supervised Multi-Dataset**    | Primary (Train with target) vs. Secondary (Test unlabelled), drift tracking & KDE overlays  |  [View HTML](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/2_supervised_multi.html)   |  [View JSON](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/2_supervised_multi.json)   |
+| **3. Unsupervised Single Dataset** | Unlabelled dataset exploration, feature health, and PCA cluster partitioning                | [View HTML](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/3_unsupervised_single.html) | [View JSON](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/3_unsupervised_single.json) |
+| **4. Unsupervised Multi-Dataset**  | Cohort A vs. Cohort B comparative distribution, missingness shift, and novel levels         | [View HTML](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/4_unsupervised_multi.html)  | [View JSON](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/exports/4_unsupervised_multi.json)  |
 
 ---
 
@@ -39,9 +39,9 @@ Explore sample reports generated across various real-world execution modes:
 
 Detailed feature cards combining statistical metrics (quantiles, missingness, zero counts, outliers, skewness) with adaptive visual plots. When secondary datasets are present, cards display overlaid Train vs. Test density curves and side-by-side boxplots.
 
-![Feature Deep Dive](artifacts/screenshots/features.png)
+![Feature Deep Dive](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/screenshots/features.png)
 
-![Feature Table](artifacts/screenshots/features_table.png)
+![Feature Table](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/screenshots/features_table.png)
 
 ### 3. Golden Feature Discovery & Ranking
 
@@ -54,25 +54,25 @@ Combines multiple perspectives into a single composite rank score:
 
 Features are partitioned into actionable tiers: **Tier 1 (Golden)**, **Tier 2 (Strong)**, **Tier 3 (Moderate)**, and **Tier 4 (Noise/Prune)**.
 
-![Golden Features](artifacts/screenshots/golden_features.png)
+![Golden Features](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/screenshots/golden_features.png)
 
 ### 4. Pairwise Feature Interactions & Arithmetic Synergy
 
 Evaluates pairwise combinations ($A \times B$, $A / B$, $A + B$, $A - B$) against individual univariate baselines to surface engineered features that provide mathematical synergy gains.
 
-![Feature Interactions](artifacts/screenshots/interactions.png)
+![Feature Interactions](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/screenshots/interactions.png)
 
 ### 5. Multicollinearity & Visual Diagnostics
 
 Directly flags redundant collinear pairs ($\vert{}r\vert{} \ge 0.80$) across Pearson and Spearman correlations, visualizes target associations, and isolates data quality outliers.
 
-![Visual Diagnostics](artifacts/screenshots/charts.png)
+![Visual Diagnostics](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/screenshots/charts.png)
 
 ### 6. Unsupervised Cluster Profiling in PCA Space
 
 Executes KMeans clustering across multiple candidate dimensions ($k$), evaluates silhouette separation, projects instances into 2D PCA space, profiles centroid deviations ($\sigma$ z-scores from global mean), and measures cluster-to-target mutual information.
 
-![Cluster Analysis](artifacts/screenshots/cluster.png)
+![Cluster Analysis](https://raw.githubusercontent.com/rnascunha/yaeda/main/artifacts/screenshots/cluster.png)
 
 ### 7. Model Error Forensics & SHAP Attribution
 
@@ -227,7 +227,7 @@ yaEDA is managed using `uv` and tested with pytest.
 
 ```bash
 # 1. Clone the repository
-$ git clone [https://github.com/your-username/yaEDA.git](https://github.com/rnascunha/yaEDA.git)
+$ git clone [https://github.com/rnascunha/yaEDA.git](https://github.com/rnascunha/yaEDA.git)
 $ cd yaEDA
 
 # 2. Create virtual environment and install all dependencies
