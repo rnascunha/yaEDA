@@ -1,4 +1,6 @@
-"""tabulareda - Automated Tabular EDA & Golden Feature Engineering Toolkit."""
+"""yaEDA - Automated Tabular EDA & Golden Feature Engineering Toolkit."""
+
+from importlib.metadata import PackageNotFoundError, version
 
 from .analyze import TabularEDA
 from .clustering import ClusterReport, TabularClusterAnalyzer
@@ -25,4 +27,8 @@ __all__ = [
     "TabularEDA",
 ]
 
-__version__ = "0.1.2"
+try:
+    __version__ = version("yaeda")
+except PackageNotFoundError:
+    # Package is not installed in the current environment
+    __version__ = "unknown"
