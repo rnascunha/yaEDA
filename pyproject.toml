@@ -72,3 +72,7 @@ ignore = [
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-ra -q --strict-markers"
+
+[tool.coverage.run]
+source = ["yaeda"]
+concurrency = ["thread"]
