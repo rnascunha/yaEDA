@@ -19,6 +19,8 @@ jobs:
       VECLIB_MAXIMUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
       MPLBACKEND: "Agg"
+      COVERAGE_CORE: "ctrace"
+      JOBLIB_START_METHOD: "spawn"
     steps:
       - uses: actions/checkout@v4
 
