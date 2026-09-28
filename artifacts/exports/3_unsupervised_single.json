@@ -1,0 +1,1353 @@
+{
+  "metadata": {
+    "dataset_name": "Train_Unlabeled",
+    "generated_at": "2026-09-23T17:25:05.010814",
+    "n_rows": 668665,
+    "n_columns": 14,
+    "target_column": null,
+    "target_type": null,
+    "memory_usage_mb": 243.8387,
+    "model_used": "None"
+  },
+  "table_profile": {
+    "dtype_counts": {
+      "str": 6,
+      "int64": 5,
+      "float64": 3
+    },
+    "column_dtypes": {
+      "id": "int64",
+      "Age": "int64",
+      "Annual_Income_USD": "float64",
+      "Daily_Commute_km": "float64",
+      "Number_of_Cars_Owned": "int64",
+      "Charging_Stations_Near_Home": "int64",
+      "Charging_Stations_Near_Work": "int64",
+      "Environmental_Concern_Level": "float64",
+      "Gender": "str",
+      "City_Type": "str",
+      "Current_Car_Type": "str",
+      "Home_Charging_Possible": "str",
+      "Subsidy_Available": "str",
+      "Range_Anxiety_Level": "str"
+    },
+    "features": {
+      "id": {
+        "name": "id",
+        "dtype": "int64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 668665,
+        "distinct_percentage": 100.0,
+        "zero_count": 1,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": 0,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 1,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 2,
+            "count": 1,
+            "percentage": 0.0
+          }
+        ],
+        "mode": 0,
+        "min_value": 0.0,
+        "max_value": 668664.0,
+        "mean": 334332.0,
+        "median": 334332.0,
+        "variance": 37259462574.1667,
+        "std_dev": 193027.1032,
+        "q05": 33433.2,
+        "q25": 167166.0,
+        "q50": 334332.0,
+        "q75": 501498.0,
+        "q95": 635230.8,
+        "iqr": 334332.0,
+        "skewness": 0.0,
+        "kurtosis": -1.2,
+        "smallest_values": [
+          {
+            "value": 0.0,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 1.0,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 2.0,
+            "count": 1,
+            "percentage": 0.0
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 668664.0,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 668663.0,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 668662.0,
+            "count": 1,
+            "percentage": 0.0
+          }
+        ],
+        "outliers": {
+          "lower_bound": -334332.0,
+          "upper_bound": 1002996.0,
+          "count": 0,
+          "percentage": 0.0
+        }
+      },
+      "Age": {
+        "name": "Age",
+        "dtype": "int64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 45,
+        "distinct_percentage": 0.007,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": 36,
+            "count": 17818,
+            "percentage": 2.665
+          },
+          {
+            "value": 54,
+            "count": 17533,
+            "percentage": 2.622
+          },
+          {
+            "value": 35,
+            "count": 16918,
+            "percentage": 2.53
+          }
+        ],
+        "mode": 36,
+        "min_value": 25.0,
+        "max_value": 69.0,
+        "mean": 47.0392,
+        "median": 47.0,
+        "variance": 165.7772,
+        "std_dev": 12.8754,
+        "q05": 27.0,
+        "q25": 36.0,
+        "q50": 47.0,
+        "q75": 58.0,
+        "q95": 67.0,
+        "iqr": 22.0,
+        "skewness": -0.0038,
+        "kurtosis": -1.174,
+        "smallest_values": [
+          {
+            "value": 25.0,
+            "count": 13264,
+            "percentage": 1.984
+          },
+          {
+            "value": 26.0,
+            "count": 14979,
+            "percentage": 2.24
+          },
+          {
+            "value": 27.0,
+            "count": 16391,
+            "percentage": 2.451
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 69.0,
+            "count": 14516,
+            "percentage": 2.171
+          },
+          {
+            "value": 68.0,
+            "count": 13737,
+            "percentage": 2.054
+          },
+          {
+            "value": 67.0,
+            "count": 15870,
+            "percentage": 2.373
+          }
+        ],
+        "outliers": {
+          "lower_bound": 3.0,
+          "upper_bound": 91.0,
+          "count": 0,
+          "percentage": 0.0
+        }
+      },
+      "Annual_Income_USD": {
+        "name": "Annual_Income_USD",
+        "dtype": "float64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 13214,
+        "distinct_percentage": 1.976,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": 30000.0,
+            "count": 61605,
+            "percentage": 9.213
+          },
+          {
+            "value": 86095.0,
+            "count": 1082,
+            "percentage": 0.162
+          },
+          {
+            "value": 96749.0,
+            "count": 1073,
+            "percentage": 0.16
+          }
+        ],
+        "mode": 30000.0,
+        "min_value": 30000.0,
+        "max_value": 188549.0,
+        "mean": 84769.267,
+        "median": 84880.0,
+        "variance": 820709568.0162,
+        "std_dev": 28648.029,
+        "q05": 30000.0,
+        "q25": 67376.0,
+        "q50": 84880.0,
+        "q75": 102753.0,
+        "q95": 132902.0,
+        "iqr": 35377.0,
+        "skewness": -0.0131,
+        "kurtosis": -0.1492,
+        "smallest_values": [
+          {
+            "value": 30000.0,
+            "count": 61605,
+            "percentage": 9.213
+          },
+          {
+            "value": 31003.0,
+            "count": 2,
+            "percentage": 0.0
+          },
+          {
+            "value": 38174.0,
+            "count": 1,
+            "percentage": 0.0
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 188549.0,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 187822.0,
+            "count": 2,
+            "percentage": 0.0
+          },
+          {
+            "value": 186936.0,
+            "count": 1,
+            "percentage": 0.0
+          }
+        ],
+        "outliers": {
+          "lower_bound": 14310.5,
+          "upper_bound": 155818.5,
+          "count": 3678,
+          "percentage": 0.55
+        }
+      },
+      "Daily_Commute_km": {
+        "name": "Daily_Commute_km",
+        "dtype": "float64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 805,
+        "distinct_percentage": 0.12,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": 5.0,
+            "count": 144280,
+            "percentage": 21.577
+          },
+          {
+            "value": 46.6,
+            "count": 2756,
+            "percentage": 0.412
+          },
+          {
+            "value": 48.5,
+            "count": 2720,
+            "percentage": 0.407
+          }
+        ],
+        "mode": 5.0,
+        "min_value": 5.0,
+        "max_value": 98.7,
+        "mean": 32.1583,
+        "median": 33.6,
+        "variance": 350.8307,
+        "std_dev": 18.7305,
+        "q05": 5.0,
+        "q25": 17.2,
+        "q50": 33.6,
+        "q75": 47.4,
+        "q95": 59.8,
+        "iqr": 30.2,
+        "skewness": -0.0846,
+        "kurtosis": -1.0609,
+        "smallest_values": [
+          {
+            "value": 5.0,
+            "count": 144280,
+            "percentage": 21.577
+          },
+          {
+            "value": 5.1,
+            "count": 54,
+            "percentage": 0.008
+          },
+          {
+            "value": 5.2,
+            "count": 29,
+            "percentage": 0.004
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 98.7,
+            "count": 1,
+            "percentage": 0.0
+          },
+          {
+            "value": 98.4,
+            "count": 2,
+            "percentage": 0.0
+          },
+          {
+            "value": 98.3,
+            "count": 5,
+            "percentage": 0.001
+          }
+        ],
+        "outliers": {
+          "lower_bound": -28.1,
+          "upper_bound": 92.7,
+          "count": 41,
+          "percentage": 0.006
+        }
+      },
+      "Number_of_Cars_Owned": {
+        "name": "Number_of_Cars_Owned",
+        "dtype": "int64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 4,
+        "distinct_percentage": 0.001,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": 2,
+            "count": 298287,
+            "percentage": 44.609
+          },
+          {
+            "value": 1,
+            "count": 288012,
+            "percentage": 43.073
+          },
+          {
+            "value": 3,
+            "count": 68877,
+            "percentage": 10.301
+          }
+        ],
+        "mode": 2,
+        "min_value": 1.0,
+        "max_value": 4.0,
+        "mean": 1.7126,
+        "median": 2.0,
+        "variance": 0.5318,
+        "std_dev": 0.7293,
+        "q05": 1.0,
+        "q25": 1.0,
+        "q50": 2.0,
+        "q75": 2.0,
+        "q95": 3.0,
+        "iqr": 1.0,
+        "skewness": 0.8145,
+        "kurtosis": 0.3561,
+        "smallest_values": [
+          {
+            "value": 1.0,
+            "count": 288012,
+            "percentage": 43.073
+          },
+          {
+            "value": 2.0,
+            "count": 298287,
+            "percentage": 44.609
+          },
+          {
+            "value": 3.0,
+            "count": 68877,
+            "percentage": 10.301
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 4.0,
+            "count": 13489,
+            "percentage": 2.017
+          },
+          {
+            "value": 3.0,
+            "count": 68877,
+            "percentage": 10.301
+          },
+          {
+            "value": 2.0,
+            "count": 298287,
+            "percentage": 44.609
+          }
+        ],
+        "outliers": {
+          "lower_bound": -0.5,
+          "upper_bound": 3.5,
+          "count": 13489,
+          "percentage": 2.017
+        }
+      },
+      "Charging_Stations_Near_Home": {
+        "name": "Charging_Stations_Near_Home",
+        "dtype": "int64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 15,
+        "distinct_percentage": 0.002,
+        "zero_count": 69865,
+        "zero_percentage": 10.448,
+        "most_frequent": [
+          {
+            "value": 2,
+            "count": 101547,
+            "percentage": 15.187
+          },
+          {
+            "value": 0,
+            "count": 69865,
+            "percentage": 10.448
+          },
+          {
+            "value": 1,
+            "count": 68177,
+            "percentage": 10.196
+          }
+        ],
+        "mode": 2,
+        "min_value": 0.0,
+        "max_value": 14.0,
+        "mean": 4.9604,
+        "median": 4.0,
+        "variance": 15.4201,
+        "std_dev": 3.9268,
+        "q05": 0.0,
+        "q25": 2.0,
+        "q50": 4.0,
+        "q75": 7.0,
+        "q95": 13.0,
+        "iqr": 5.0,
+        "skewness": 0.6987,
+        "kurtosis": -0.4825,
+        "smallest_values": [
+          {
+            "value": 0.0,
+            "count": 69865,
+            "percentage": 10.448
+          },
+          {
+            "value": 1.0,
+            "count": 68177,
+            "percentage": 10.196
+          },
+          {
+            "value": 2.0,
+            "count": 101547,
+            "percentage": 15.187
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 14.0,
+            "count": 20548,
+            "percentage": 3.073
+          },
+          {
+            "value": 13.0,
+            "count": 21282,
+            "percentage": 3.183
+          },
+          {
+            "value": 12.0,
+            "count": 21642,
+            "percentage": 3.237
+          }
+        ],
+        "outliers": {
+          "lower_bound": -5.5,
+          "upper_bound": 14.5,
+          "count": 0,
+          "percentage": 0.0
+        }
+      },
+      "Charging_Stations_Near_Work": {
+        "name": "Charging_Stations_Near_Work",
+        "dtype": "int64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 20,
+        "distinct_percentage": 0.003,
+        "zero_count": 25673,
+        "zero_percentage": 3.839,
+        "most_frequent": [
+          {
+            "value": 3,
+            "count": 79739,
+            "percentage": 11.925
+          },
+          {
+            "value": 1,
+            "count": 53736,
+            "percentage": 8.036
+          },
+          {
+            "value": 8,
+            "count": 50675,
+            "percentage": 7.579
+          }
+        ],
+        "mode": 3,
+        "min_value": 0.0,
+        "max_value": 19.0,
+        "mean": 7.1763,
+        "median": 6.0,
+        "variance": 26.9011,
+        "std_dev": 5.1866,
+        "q05": 1.0,
+        "q25": 3.0,
+        "q50": 6.0,
+        "q75": 10.0,
+        "q95": 18.0,
+        "iqr": 7.0,
+        "skewness": 0.7002,
+        "kurtosis": -0.4892,
+        "smallest_values": [
+          {
+            "value": 0.0,
+            "count": 25673,
+            "percentage": 3.839
+          },
+          {
+            "value": 1.0,
+            "count": 53736,
+            "percentage": 8.036
+          },
+          {
+            "value": 2.0,
+            "count": 49538,
+            "percentage": 7.408
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 19.0,
+            "count": 16934,
+            "percentage": 2.533
+          },
+          {
+            "value": 18.0,
+            "count": 18113,
+            "percentage": 2.709
+          },
+          {
+            "value": 17.0,
+            "count": 18166,
+            "percentage": 2.717
+          }
+        ],
+        "outliers": {
+          "lower_bound": -7.5,
+          "upper_bound": 20.5,
+          "count": 0,
+          "percentage": 0.0
+        }
+      },
+      "Environmental_Concern_Level": {
+        "name": "Environmental_Concern_Level",
+        "dtype": "float64",
+        "is_numeric": true,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 5,
+        "distinct_percentage": 0.001,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": 1.0,
+            "count": 147476,
+            "percentage": 22.055
+          },
+          {
+            "value": 2.0,
+            "count": 135133,
+            "percentage": 20.209
+          },
+          {
+            "value": 4.0,
+            "count": 130469,
+            "percentage": 19.512
+          }
+        ],
+        "mode": 1.0,
+        "min_value": 1.0,
+        "max_value": 5.0,
+        "mean": 2.9355,
+        "median": 3.0,
+        "variance": 2.0424,
+        "std_dev": 1.4291,
+        "q05": 1.0,
+        "q25": 2.0,
+        "q50": 3.0,
+        "q75": 4.0,
+        "q95": 5.0,
+        "iqr": 2.0,
+        "skewness": 0.0543,
+        "kurtosis": -1.3256,
+        "smallest_values": [
+          {
+            "value": 1.0,
+            "count": 147476,
+            "percentage": 22.055
+          },
+          {
+            "value": 2.0,
+            "count": 135133,
+            "percentage": 20.209
+          },
+          {
+            "value": 3.0,
+            "count": 127351,
+            "percentage": 19.046
+          }
+        ],
+        "greatest_values": [
+          {
+            "value": 5.0,
+            "count": 128236,
+            "percentage": 19.178
+          },
+          {
+            "value": 4.0,
+            "count": 130469,
+            "percentage": 19.512
+          },
+          {
+            "value": 3.0,
+            "count": 127351,
+            "percentage": 19.046
+          }
+        ],
+        "outliers": {
+          "lower_bound": -1.0,
+          "upper_bound": 7.0,
+          "count": 0,
+          "percentage": 0.0
+        }
+      },
+      "Gender": {
+        "name": "Gender",
+        "dtype": "str",
+        "is_numeric": false,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 3,
+        "distinct_percentage": 0.0,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": "Male",
+            "count": 367954,
+            "percentage": 55.028
+          },
+          {
+            "value": "Female",
+            "count": 295427,
+            "percentage": 44.182
+          },
+          {
+            "value": "Other",
+            "count": 5284,
+            "percentage": 0.79
+          }
+        ],
+        "mode": "Male",
+        "min_value": null,
+        "max_value": null,
+        "mean": null,
+        "median": null,
+        "variance": null,
+        "std_dev": null,
+        "q05": null,
+        "q25": null,
+        "q50": null,
+        "q75": null,
+        "q95": null,
+        "iqr": null,
+        "skewness": null,
+        "kurtosis": null,
+        "smallest_values": null,
+        "greatest_values": null,
+        "outliers": null
+      },
+      "City_Type": {
+        "name": "City_Type",
+        "dtype": "str",
+        "is_numeric": false,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 3,
+        "distinct_percentage": 0.0,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": "Urban",
+            "count": 289305,
+            "percentage": 43.266
+          },
+          {
+            "value": "Suburban",
+            "count": 255377,
+            "percentage": 38.192
+          },
+          {
+            "value": "Rural",
+            "count": 123983,
+            "percentage": 18.542
+          }
+        ],
+        "mode": "Urban",
+        "min_value": null,
+        "max_value": null,
+        "mean": null,
+        "median": null,
+        "variance": null,
+        "std_dev": null,
+        "q05": null,
+        "q25": null,
+        "q50": null,
+        "q75": null,
+        "q95": null,
+        "iqr": null,
+        "skewness": null,
+        "kurtosis": null,
+        "smallest_values": null,
+        "greatest_values": null,
+        "outliers": null
+      },
+      "Current_Car_Type": {
+        "name": "Current_Car_Type",
+        "dtype": "str",
+        "is_numeric": false,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 4,
+        "distinct_percentage": 0.001,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": "Sedan",
+            "count": 303459,
+            "percentage": 45.383
+          },
+          {
+            "value": "SUV",
+            "count": 246545,
+            "percentage": 36.871
+          },
+          {
+            "value": "Hatchback",
+            "count": 79438,
+            "percentage": 11.88
+          }
+        ],
+        "mode": "Sedan",
+        "min_value": null,
+        "max_value": null,
+        "mean": null,
+        "median": null,
+        "variance": null,
+        "std_dev": null,
+        "q05": null,
+        "q25": null,
+        "q50": null,
+        "q75": null,
+        "q95": null,
+        "iqr": null,
+        "skewness": null,
+        "kurtosis": null,
+        "smallest_values": null,
+        "greatest_values": null,
+        "outliers": null
+      },
+      "Home_Charging_Possible": {
+        "name": "Home_Charging_Possible",
+        "dtype": "str",
+        "is_numeric": false,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 2,
+        "distinct_percentage": 0.0,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": "Yes",
+            "count": 462677,
+            "percentage": 69.194
+          },
+          {
+            "value": "No",
+            "count": 205988,
+            "percentage": 30.806
+          }
+        ],
+        "mode": "Yes",
+        "min_value": null,
+        "max_value": null,
+        "mean": null,
+        "median": null,
+        "variance": null,
+        "std_dev": null,
+        "q05": null,
+        "q25": null,
+        "q50": null,
+        "q75": null,
+        "q95": null,
+        "iqr": null,
+        "skewness": null,
+        "kurtosis": null,
+        "smallest_values": null,
+        "greatest_values": null,
+        "outliers": null
+      },
+      "Subsidy_Available": {
+        "name": "Subsidy_Available",
+        "dtype": "str",
+        "is_numeric": false,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 2,
+        "distinct_percentage": 0.0,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": "Yes",
+            "count": 419909,
+            "percentage": 62.798
+          },
+          {
+            "value": "No",
+            "count": 248756,
+            "percentage": 37.202
+          }
+        ],
+        "mode": "Yes",
+        "min_value": null,
+        "max_value": null,
+        "mean": null,
+        "median": null,
+        "variance": null,
+        "std_dev": null,
+        "q05": null,
+        "q25": null,
+        "q50": null,
+        "q75": null,
+        "q95": null,
+        "iqr": null,
+        "skewness": null,
+        "kurtosis": null,
+        "smallest_values": null,
+        "greatest_values": null,
+        "outliers": null
+      },
+      "Range_Anxiety_Level": {
+        "name": "Range_Anxiety_Level",
+        "dtype": "str",
+        "is_numeric": false,
+        "is_target": false,
+        "total_count": 668665,
+        "missing_count": 0,
+        "missing_percentage": 0.0,
+        "distinct_count": 3,
+        "distinct_percentage": 0.0,
+        "zero_count": 0,
+        "zero_percentage": 0.0,
+        "most_frequent": [
+          {
+            "value": "Low",
+            "count": 603972,
+            "percentage": 90.325
+          },
+          {
+            "value": "Medium",
+            "count": 62499,
+            "percentage": 9.347
+          },
+          {
+            "value": "High",
+            "count": 2194,
+            "percentage": 0.328
+          }
+        ],
+        "mode": "Low",
+        "min_value": null,
+        "max_value": null,
+        "mean": null,
+        "median": null,
+        "variance": null,
+        "std_dev": null,
+        "q05": null,
+        "q25": null,
+        "q50": null,
+        "q75": null,
+        "q95": null,
+        "iqr": null,
+        "skewness": null,
+        "kurtosis": null,
+        "smallest_values": null,
+        "greatest_values": null,
+        "outliers": null
+      }
+    }
+  },
+  "secondary_datasets": null,
+  "correlation_analysis": {
+    "target_associations": {},
+    "collinear_pairs": [],
+    "pearson_matrix": {
+      "id": {
+        "id": 1.0,
+        "Age": 0.0013,
+        "Annual_Income_USD": -0.0004,
+        "Daily_Commute_km": -0.001,
+        "Number_of_Cars_Owned": 0.0004,
+        "Charging_Stations_Near_Home": 0.0023,
+        "Charging_Stations_Near_Work": 0.0009,
+        "Environmental_Concern_Level": -0.0001
+      },
+      "Age": {
+        "id": 0.0013,
+        "Age": 1.0,
+        "Annual_Income_USD": -0.0046,
+        "Daily_Commute_km": -0.0065,
+        "Number_of_Cars_Owned": -0.002,
+        "Charging_Stations_Near_Home": -0.0041,
+        "Charging_Stations_Near_Work": -0.0059,
+        "Environmental_Concern_Level": -0.0037
+      },
+      "Annual_Income_USD": {
+        "id": -0.0004,
+        "Age": -0.0046,
+        "Annual_Income_USD": 1.0,
+        "Daily_Commute_km": 0.008,
+        "Number_of_Cars_Owned": -0.0002,
+        "Charging_Stations_Near_Home": -0.0086,
+        "Charging_Stations_Near_Work": -0.0028,
+        "Environmental_Concern_Level": 0.0764
+      },
+      "Daily_Commute_km": {
+        "id": -0.001,
+        "Age": -0.0065,
+        "Annual_Income_USD": 0.008,
+        "Daily_Commute_km": 1.0,
+        "Number_of_Cars_Owned": 0.0027,
+        "Charging_Stations_Near_Home": 0.0452,
+        "Charging_Stations_Near_Work": 0.035,
+        "Environmental_Concern_Level": -0.0189
+      },
+      "Number_of_Cars_Owned": {
+        "id": 0.0004,
+        "Age": -0.002,
+        "Annual_Income_USD": -0.0002,
+        "Daily_Commute_km": 0.0027,
+        "Number_of_Cars_Owned": 1.0,
+        "Charging_Stations_Near_Home": 0.0085,
+        "Charging_Stations_Near_Work": 0.0086,
+        "Environmental_Concern_Level": -0.0006
+      },
+      "Charging_Stations_Near_Home": {
+        "id": 0.0023,
+        "Age": -0.0041,
+        "Annual_Income_USD": -0.0086,
+        "Daily_Commute_km": 0.0452,
+        "Number_of_Cars_Owned": 0.0085,
+        "Charging_Stations_Near_Home": 1.0,
+        "Charging_Stations_Near_Work": 0.5111,
+        "Environmental_Concern_Level": -0.0113
+      },
+      "Charging_Stations_Near_Work": {
+        "id": 0.0009,
+        "Age": -0.0059,
+        "Annual_Income_USD": -0.0028,
+        "Daily_Commute_km": 0.035,
+        "Number_of_Cars_Owned": 0.0086,
+        "Charging_Stations_Near_Home": 0.5111,
+        "Charging_Stations_Near_Work": 1.0,
+        "Environmental_Concern_Level": -0.0078
+      },
+      "Environmental_Concern_Level": {
+        "id": -0.0001,
+        "Age": -0.0037,
+        "Annual_Income_USD": 0.0764,
+        "Daily_Commute_km": -0.0189,
+        "Number_of_Cars_Owned": -0.0006,
+        "Charging_Stations_Near_Home": -0.0113,
+        "Charging_Stations_Near_Work": -0.0078,
+        "Environmental_Concern_Level": 1.0
+      }
+    },
+    "spearman_matrix": {
+      "id": {
+        "id": 1.0,
+        "Age": 0.0013,
+        "Annual_Income_USD": -0.0006,
+        "Daily_Commute_km": -0.0012,
+        "Number_of_Cars_Owned": 0.0006,
+        "Charging_Stations_Near_Home": 0.0025,
+        "Charging_Stations_Near_Work": 0.0014,
+        "Environmental_Concern_Level": -0.0
+      },
+      "Age": {
+        "id": 0.0013,
+        "Age": 1.0,
+        "Annual_Income_USD": -0.0042,
+        "Daily_Commute_km": -0.0068,
+        "Number_of_Cars_Owned": -0.002,
+        "Charging_Stations_Near_Home": -0.0043,
+        "Charging_Stations_Near_Work": -0.0071,
+        "Environmental_Concern_Level": -0.0036
+      },
+      "Annual_Income_USD": {
+        "id": -0.0006,
+        "Age": -0.0042,
+        "Annual_Income_USD": 1.0,
+        "Daily_Commute_km": 0.0045,
+        "Number_of_Cars_Owned": -0.0013,
+        "Charging_Stations_Near_Home": -0.0082,
+        "Charging_Stations_Near_Work": -0.0048,
+        "Environmental_Concern_Level": 0.0758
+      },
+      "Daily_Commute_km": {
+        "id": -0.0012,
+        "Age": -0.0068,
+        "Annual_Income_USD": 0.0045,
+        "Daily_Commute_km": 1.0,
+        "Number_of_Cars_Owned": 0.0026,
+        "Charging_Stations_Near_Home": 0.0437,
+        "Charging_Stations_Near_Work": 0.0378,
+        "Environmental_Concern_Level": -0.0187
+      },
+      "Number_of_Cars_Owned": {
+        "id": 0.0006,
+        "Age": -0.002,
+        "Annual_Income_USD": -0.0013,
+        "Daily_Commute_km": 0.0026,
+        "Number_of_Cars_Owned": 1.0,
+        "Charging_Stations_Near_Home": 0.009,
+        "Charging_Stations_Near_Work": 0.0089,
+        "Environmental_Concern_Level": 0.0007
+      },
+      "Charging_Stations_Near_Home": {
+        "id": 0.0025,
+        "Age": -0.0043,
+        "Annual_Income_USD": -0.0082,
+        "Daily_Commute_km": 0.0437,
+        "Number_of_Cars_Owned": 0.009,
+        "Charging_Stations_Near_Home": 1.0,
+        "Charging_Stations_Near_Work": 0.5437,
+        "Environmental_Concern_Level": -0.0123
+      },
+      "Charging_Stations_Near_Work": {
+        "id": 0.0014,
+        "Age": -0.0071,
+        "Annual_Income_USD": -0.0048,
+        "Daily_Commute_km": 0.0378,
+        "Number_of_Cars_Owned": 0.0089,
+        "Charging_Stations_Near_Home": 0.5437,
+        "Charging_Stations_Near_Work": 1.0,
+        "Environmental_Concern_Level": -0.0075
+      },
+      "Environmental_Concern_Level": {
+        "id": -0.0,
+        "Age": -0.0036,
+        "Annual_Income_USD": 0.0758,
+        "Daily_Commute_km": -0.0187,
+        "Number_of_Cars_Owned": 0.0007,
+        "Charging_Stations_Near_Home": -0.0123,
+        "Charging_Stations_Near_Work": -0.0075,
+        "Environmental_Concern_Level": 1.0
+      }
+    }
+  },
+  "feature_importance_ranking": [],
+  "cluster_analysis": [
+    {
+      "n_clusters": 2,
+      "target": null,
+      "target_type": null,
+      "silhouette_score": 0.1412,
+      "inertia": 4626515.23,
+      "mutual_info_with_target": null,
+      "clusters": [
+        {
+          "cluster_id": 0,
+          "size": 429082,
+          "percentage": 64.17,
+          "target_mean": null,
+          "target_distribution": {},
+          "defining_features": [
+            {
+              "feature": "Charging_Stations_Near_Work",
+              "cluster_mean": -0.549,
+              "global_mean": 0.0,
+              "z_difference": -0.549
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.547,
+              "global_mean": 0.0,
+              "z_difference": -0.547
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": -0.047,
+              "global_mean": 0.0,
+              "z_difference": -0.047
+            },
+            {
+              "feature": "Gender",
+              "cluster_mean": -0.012,
+              "global_mean": 0.0,
+              "z_difference": -0.012
+            }
+          ]
+        },
+        {
+          "cluster_id": 1,
+          "size": 239583,
+          "percentage": 35.83,
+          "target_mean": null,
+          "target_distribution": {},
+          "defining_features": [
+            {
+              "feature": "Charging_Stations_Near_Work",
+              "cluster_mean": 0.984,
+              "global_mean": 0.0,
+              "z_difference": 0.984
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": 0.98,
+              "global_mean": 0.0,
+              "z_difference": 0.98
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": 0.084,
+              "global_mean": 0.0,
+              "z_difference": 0.084
+            },
+            {
+              "feature": "Gender",
+              "cluster_mean": 0.021,
+              "global_mean": 0.0,
+              "z_difference": 0.021
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n_clusters": 3,
+      "target": null,
+      "target_type": null,
+      "silhouette_score": 0.1262,
+      "inertia": 4175881.53,
+      "mutual_info_with_target": null,
+      "clusters": [
+        {
+          "cluster_id": 0,
+          "size": 220341,
+          "percentage": 32.95,
+          "target_mean": null,
+          "target_distribution": {},
+          "defining_features": [
+            {
+              "feature": "Gender",
+              "cluster_mean": -1.107,
+              "global_mean": 0.0,
+              "z_difference": -1.107
+            },
+            {
+              "feature": "Charging_Stations_Near_Work",
+              "cluster_mean": -0.432,
+              "global_mean": 0.0,
+              "z_difference": -0.432
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.42,
+              "global_mean": 0.0,
+              "z_difference": -0.42
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": -0.047,
+              "global_mean": 0.0,
+              "z_difference": -0.047
+            }
+          ]
+        },
+        {
+          "cluster_id": 1,
+          "size": 183295,
+          "percentage": 27.41,
+          "target_mean": null,
+          "target_distribution": {},
+          "defining_features": [
+            {
+              "feature": "Charging_Stations_Near_Work",
+              "cluster_mean": 1.192,
+              "global_mean": 0.0,
+              "z_difference": 1.192
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": 1.153,
+              "global_mean": 0.0,
+              "z_difference": 1.153
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": 0.092,
+              "global_mean": 0.0,
+              "z_difference": 0.092
+            },
+            {
+              "feature": "Gender",
+              "cluster_mean": 0.057,
+              "global_mean": 0.0,
+              "z_difference": 0.057
+            }
+          ]
+        },
+        {
+          "cluster_id": 2,
+          "size": 265029,
+          "percentage": 39.64,
+          "target_mean": null,
+          "target_distribution": {},
+          "defining_features": [
+            {
+              "feature": "Gender",
+              "cluster_mean": 0.881,
+              "global_mean": 0.0,
+              "z_difference": 0.881
+            },
+            {
+              "feature": "Charging_Stations_Near_Work",
+              "cluster_mean": -0.465,
+              "global_mean": 0.0,
+              "z_difference": -0.465
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.448,
+              "global_mean": 0.0,
+              "z_difference": -0.448
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": -0.025,
+              "global_mean": 0.0,
+              "z_difference": -0.025
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "model_diagnostics": null
+}

@@ -1,6 +1,6 @@
 # yaEDA: Yet Another EDA 🚀
 
-[![CI](https://github.com/your-username/yaEDA/actions/workflows/ci.yml/badge.svg)](https://github.com/rnascunha/yaEDA/actions)
+[![CI](https://github.com/rnascunha/yaEDA/actions/workflows/ci.yml/badge.svg)](https://github.com/rnascunha/yaEDA/actions)
 [![PyPI version](https://img.shields.io/pypi/v/yaeda.svg)](https://pypi.org/project/yaeda/)
 [![Python versions](https://img.shields.io/pypi/pyversions/yaeda.svg)](https://pypi.org/project/yaeda/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -95,8 +95,8 @@ Control pipeline depth with a single flag:
 eda = TabularEDA(df=train_df, target="target", preset="standard")
 ```
 
-| Preset         | Profiling & Health | Correlation Matrix | Golden Features | Clustering (k) | Pairwise Interactions | PDP / ICE Curves | Recommended Use Case                             |
-| -------------- | ------------------ | ------------------ | --------------- | -------------- | --------------------- | ---------------- | ------------------------------------------------ |
+| Preset       | Profiling & Health | Correlation Matrix | Golden Features | Clustering (k) | Pairwise Interactions | PDP / ICE Curves | Recommended Use Case                             |
+| ------------ | ------------------ | ------------------ | --------------- | -------------- | --------------------- | ---------------- | ------------------------------------------------ |
 | `"minimal"`  | ✅ Full            | ❌                 | ❌              | ❌             | ❌                    | ❌               | Millions of rows; sub-second health checks.      |
 | `"standard"` | ✅ Full            | ✅ Full            | ✅ Fast         | ✅             | ❌                    | ❌               | Default recommendation for large datasets.       |
 | `"deep"`     | ✅ Full            | ✅ Full            | ✅ Full         | ✅             | ✅ Full               | ✅ Full          | Deep exploration; competition feature discovery. |
@@ -165,7 +165,7 @@ $ pip install "yaeda[all]"
 Or add via `uv`:
 
 ```bash
-$ uv add yaeda --extra allu
+$ uv add yaeda --extra all
 ```
 
 ## Quickstart

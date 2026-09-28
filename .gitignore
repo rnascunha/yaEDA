@@ -31,3 +31,7 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+# Example
+!artifacts/exports/*.html
+!artifacts/exports/*.json

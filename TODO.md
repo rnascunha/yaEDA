@@ -19,7 +19,7 @@
 
 - ~~Performance issues~~
 - ~~Target optional~~
-- Make selectable what to compute
+- ~~Make selectable what to compute~~
 - ~~Load to datasets (train and test) to compare~~
 - Show table on html. Must be in a smart way, loading as need as data can be huge (can this be done in a standalone way?)
 - Add/configure metadata:
