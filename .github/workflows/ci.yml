@@ -8,10 +8,19 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12"]
+        include:
+          # Test cross-platform compatibility on Python 3.12 only
+          - os: windows-latest
+            python-version: "3.12"
+          - os: macos-latest
+            python-version: "3.12"
+
     env:
       OMP_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
@@ -19,8 +28,7 @@ jobs:
       VECLIB_MAXIMUM_THREADS: "1"
       NUMEXPR_NUM_THREADS: "1"
       MPLBACKEND: "Agg"
-      COVERAGE_CORE: "ctrace"
-      JOBLIB_START_METHOD: "spawn"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +43,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev --extra shap
 
-      - name: Check code formatting & lint
+      - name: Check code formatting & lint (Ubuntu only)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         run: uv run ruff check .
 
       - name: Run test suite
-        run: uv run python -X faulthandler -m pytest --cov=yaeda --cov-report=term-missing -v -s
+        run: uv run python -X faulthandler -m pytest --cov=yaeda --cov-report=term-missing -v
