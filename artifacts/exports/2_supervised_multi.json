@@ -1,13 +1,13 @@
 {
   "metadata": {
     "dataset_name": "Train",
-    "generated_at": "2026-09-23T17:24:39.189599",
+    "generated_at": "2026-09-28T18:00:03.922262",
     "n_rows": 668665,
     "n_columns": 15,
     "target_column": "Will_Buy_EV",
     "target_type": "classification",
     "memory_usage_mb": 276.4722,
-    "model_used": "RandomForestClassifier"
+    "model_used": "ExtraTreesClassifier"
   },
   "table_profile": {
     "dtype_counts": {
@@ -2482,7 +2482,7 @@
         "pearson_p_value": 0.991212,
         "spearman_corr": -0.0,
         "spearman_p_value": 0.991212,
-        "mutual_info": 0.0003
+        "mutual_info": 0.0
       },
       "Age": {
         "feature": "Age",
@@ -2491,7 +2491,7 @@
         "pearson_p_value": 0.0,
         "spearman_corr": -0.0073,
         "spearman_p_value": 0.0,
-        "mutual_info": 0.0042
+        "mutual_info": 0.0031
       },
       "Annual_Income_USD": {
         "feature": "Annual_Income_USD",
@@ -2500,7 +2500,7 @@
         "pearson_p_value": 0.0,
         "spearman_corr": 0.2242,
         "spearman_p_value": 0.0,
-        "mutual_info": 0.0539
+        "mutual_info": 0.0475
       },
       "Daily_Commute_km": {
         "feature": "Daily_Commute_km",
@@ -2509,7 +2509,7 @@
         "pearson_p_value": 0.0,
         "spearman_corr": -0.0446,
         "spearman_p_value": 0.0,
-        "mutual_info": 0.0055
+        "mutual_info": 0.0006
       },
       "Number_of_Cars_Owned": {
         "feature": "Number_of_Cars_Owned",
@@ -2518,7 +2518,7 @@
         "pearson_p_value": 0.001444,
         "spearman_corr": 0.0057,
         "spearman_p_value": 3e-06,
-        "mutual_info": 0.0
+        "mutual_info": 0.0001
       },
       "Charging_Stations_Near_Home": {
         "feature": "Charging_Stations_Near_Home",
@@ -2527,7 +2527,7 @@
         "pearson_p_value": 0.0,
         "spearman_corr": -0.021,
         "spearman_p_value": 0.0,
-        "mutual_info": 0.0005
+        "mutual_info": 0.0007
       },
       "Charging_Stations_Near_Work": {
         "feature": "Charging_Stations_Near_Work",
@@ -2536,7 +2536,7 @@
         "pearson_p_value": 0.0,
         "spearman_corr": -0.014,
         "spearman_p_value": 0.0,
-        "mutual_info": 0.0002
+        "mutual_info": 0.0003
       },
       "Environmental_Concern_Level": {
         "feature": "Environmental_Concern_Level",
@@ -2545,7 +2545,7 @@
         "pearson_p_value": 0.0,
         "spearman_corr": 0.4612,
         "spearman_p_value": 0.0,
-        "mutual_info": 0.1259
+        "mutual_info": 0.1301
       },
       "Gender": {
         "feature": "Gender",
@@ -2563,7 +2563,7 @@
         "pearson_p_value": null,
         "spearman_corr": null,
         "spearman_p_value": null,
-        "mutual_info": 0.0006
+        "mutual_info": 0.0005
       },
       "Current_Car_Type": {
         "feature": "Current_Car_Type",
@@ -2572,7 +2572,7 @@
         "pearson_p_value": null,
         "spearman_corr": null,
         "spearman_p_value": null,
-        "mutual_info": 0.0001
+        "mutual_info": 0.0003
       },
       "Home_Charging_Possible": {
         "feature": "Home_Charging_Possible",
@@ -2581,7 +2581,7 @@
         "pearson_p_value": null,
         "spearman_corr": null,
         "spearman_p_value": null,
-        "mutual_info": 0.0037
+        "mutual_info": 0.0033
       },
       "Subsidy_Available": {
         "feature": "Subsidy_Available",
@@ -2590,7 +2590,7 @@
         "pearson_p_value": null,
         "spearman_corr": null,
         "spearman_p_value": null,
-        "mutual_info": 0.0808
+        "mutual_info": 0.08
       },
       "Range_Anxiety_Level": {
         "feature": "Range_Anxiety_Level",
@@ -2599,7 +2599,7 @@
         "pearson_p_value": null,
         "spearman_corr": null,
         "spearman_p_value": null,
-        "mutual_info": 0.009
+        "mutual_info": 0.0088
       }
     },
     "collinear_pairs": [],
@@ -2771,182 +2771,182 @@
   "feature_importance_ranking": [
     {
       "feature": "Environmental_Concern_Level",
-      "tree_importance": 0.5639,
-      "permutation_mean": 0.1836,
-      "permutation_std": 0.0007,
-      "attribution_score": 0.1197,
+      "tree_importance": 0.541,
+      "permutation_mean": 0.2033,
+      "permutation_std": 0.0021,
+      "attribution_score": 0.0998,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.1424,
-      "golden_feature_score": 0.9994,
+      "mutual_info": 0.1294,
+      "golden_feature_score": 1.0,
       "tier": "Tier 1: Golden",
       "recommendation": "Primary Predictor",
       "rank": 1
     },
     {
       "feature": "Subsidy_Available",
-      "tree_importance": 0.2981,
-      "permutation_mean": 0.1652,
-      "permutation_std": 0.0009,
-      "attribution_score": 0.0916,
+      "tree_importance": 0.3532,
+      "permutation_mean": 0.1866,
+      "permutation_std": 0.004,
+      "attribution_score": 0.093,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.143,
-      "golden_feature_score": 0.8119,
+      "mutual_info": 0.0824,
+      "golden_feature_score": 0.8406,
       "tier": "Tier 1: Golden",
       "recommendation": "Primary Predictor",
       "rank": 2
     },
     {
       "feature": "Annual_Income_USD",
-      "tree_importance": 0.0952,
-      "permutation_mean": 0.0214,
-      "permutation_std": 0.0002,
-      "attribution_score": 0.0325,
+      "tree_importance": 0.0645,
+      "permutation_mean": 0.0141,
+      "permutation_std": 0.0014,
+      "attribution_score": 0.0184,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.054,
-      "golden_feature_score": 0.2169,
+      "mutual_info": 0.0446,
+      "golden_feature_score": 0.1567,
       "tier": "Tier 3: Moderate",
       "recommendation": "Auxiliary Predictor",
       "rank": 3
     },
     {
       "feature": "Range_Anxiety_Level",
-      "tree_importance": 0.0249,
-      "permutation_mean": 0.0066,
-      "permutation_std": 0.0001,
-      "attribution_score": 0.013,
+      "tree_importance": 0.0217,
+      "permutation_mean": 0.0053,
+      "permutation_std": 0.0006,
+      "attribution_score": 0.0091,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0625,
-      "golden_feature_score": 0.1222,
+      "mutual_info": 0.0136,
+      "golden_feature_score": 0.0607,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 4
     },
     {
       "feature": "Home_Charging_Possible",
-      "tree_importance": 0.0074,
-      "permutation_mean": 0.0009,
-      "permutation_std": 0.0001,
-      "attribution_score": 0.0092,
+      "tree_importance": 0.0099,
+      "permutation_mean": 0.0025,
+      "permutation_std": 0.0004,
+      "attribution_score": 0.0108,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0769,
-      "golden_feature_score": 0.1107,
+      "mutual_info": 0.0048,
+      "golden_feature_score": 0.0485,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 5
     },
     {
-      "feature": "City_Type",
-      "tree_importance": 0.001,
-      "permutation_mean": 0.0,
-      "permutation_std": 0.0,
-      "attribution_score": 0.001,
+      "feature": "Daily_Commute_km",
+      "tree_importance": 0.0021,
+      "permutation_mean": 0.0002,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0021,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.037,
-      "golden_feature_score": 0.041,
+      "mutual_info": 0.0026,
+      "golden_feature_score": 0.0091,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 6
     },
     {
-      "feature": "Current_Car_Type",
-      "tree_importance": 0.0003,
+      "feature": "Charging_Stations_Near_Home",
+      "tree_importance": 0.0013,
       "permutation_mean": 0.0,
-      "permutation_std": 0.0,
-      "attribution_score": 0.0005,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0011,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0348,
-      "golden_feature_score": 0.0373,
+      "mutual_info": 0.0043,
+      "golden_feature_score": 0.0071,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 7
     },
     {
-      "feature": "Gender",
-      "tree_importance": 0.0001,
-      "permutation_mean": 0.0,
-      "permutation_std": 0.0,
-      "attribution_score": 0.0003,
+      "feature": "Current_Car_Type",
+      "tree_importance": 0.0007,
+      "permutation_mean": 0.0003,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0012,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0322,
-      "golden_feature_score": 0.0335,
+      "mutual_info": 0.0016,
+      "golden_feature_score": 0.0045,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 8
     },
     {
-      "feature": "Number_of_Cars_Owned",
-      "tree_importance": 0.0002,
-      "permutation_mean": 0.0,
-      "permutation_std": 0.0,
-      "attribution_score": 0.0005,
+      "feature": "City_Type",
+      "tree_importance": 0.0011,
+      "permutation_mean": 0.0004,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0014,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0305,
-      "golden_feature_score": 0.0324,
+      "mutual_info": 0.0001,
+      "golden_feature_score": 0.0039,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 9
     },
     {
-      "feature": "Daily_Commute_km",
-      "tree_importance": 0.0049,
-      "permutation_mean": 0.0007,
+      "feature": "Age",
+      "tree_importance": 0.0008,
+      "permutation_mean": 0.0,
       "permutation_std": 0.0001,
-      "attribution_score": 0.0035,
+      "attribution_score": 0.001,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0051,
-      "golden_feature_score": 0.0171,
+      "mutual_info": 0.0,
+      "golden_feature_score": 0.0017,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 10
     },
     {
-      "feature": "Charging_Stations_Near_Home",
-      "tree_importance": 0.001,
-      "permutation_mean": 0.0001,
-      "permutation_std": 0.0,
-      "attribution_score": 0.0017,
+      "feature": "id",
+      "tree_importance": 0.0009,
+      "permutation_mean": 0.0,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0009,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0066,
-      "golden_feature_score": 0.0112,
+      "mutual_info": 0.0,
+      "golden_feature_score": 0.0012,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 11
     },
     {
-      "feature": "Age",
-      "tree_importance": 0.0013,
+      "feature": "Number_of_Cars_Owned",
+      "tree_importance": 0.0006,
       "permutation_mean": 0.0001,
-      "permutation_std": 0.0,
-      "attribution_score": 0.0015,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0008,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0041,
-      "golden_feature_score": 0.0083,
+      "mutual_info": 0.0,
+      "golden_feature_score": 0.0011,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 12
     },
     {
       "feature": "Charging_Stations_Near_Work",
-      "tree_importance": 0.0007,
+      "tree_importance": 0.0013,
       "permutation_mean": 0.0,
       "permutation_std": 0.0,
-      "attribution_score": 0.0005,
+      "attribution_score": 0.0007,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0039,
-      "golden_feature_score": 0.0046,
+      "mutual_info": 0.0,
+      "golden_feature_score": 0.0007,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 13
     },
     {
-      "feature": "id",
-      "tree_importance": 0.0009,
+      "feature": "Gender",
+      "tree_importance": 0.0008,
       "permutation_mean": 0.0,
-      "permutation_std": 0.0,
-      "attribution_score": 0.0002,
+      "permutation_std": 0.0001,
+      "attribution_score": 0.0006,
       "attribution_method": "SHAP (mean |value|)",
-      "mutual_info": 0.0005,
-      "golden_feature_score": 0.0002,
+      "mutual_info": 0.0,
+      "golden_feature_score": 0.0001,
       "tier": "Tier 4: Noise / Low",
       "recommendation": "Candidate for pruning",
       "rank": 14
@@ -2957,79 +2957,79 @@
       "n_clusters": 2,
       "target": "Will_Buy_EV",
       "target_type": "classification",
-      "silhouette_score": 0.2241,
-      "inertia": 4355097.83,
-      "mutual_info_with_target": 0.0995,
+      "silhouette_score": 0.2169,
+      "inertia": 199017.31,
+      "mutual_info_with_target": 0.0047,
       "clusters": [
         {
           "cluster_id": 0,
-          "size": 203528,
-          "percentage": 30.44,
+          "size": 20829,
+          "percentage": 69.43,
           "target_mean": null,
           "target_distribution": {
-            "No": 87.17,
-            "Yes": 12.83
+            "No": 80.61,
+            "Yes": 19.39
           },
           "defining_features": [
             {
               "feature": "Home_Charging_Possible",
-              "cluster_mean": -1.497,
+              "cluster_mean": 0.658,
               "global_mean": -0.0,
-              "z_difference": -1.497
-            },
-            {
-              "feature": "City_Type",
-              "cluster_mean": 0.801,
-              "global_mean": -0.0,
-              "z_difference": 0.801
+              "z_difference": 0.658
             },
             {
               "feature": "Range_Anxiety_Level",
-              "cluster_mean": 0.712,
+              "cluster_mean": -0.309,
               "global_mean": -0.0,
-              "z_difference": 0.712
+              "z_difference": -0.309
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.266,
+              "global_mean": 0.0,
+              "z_difference": -0.266
             },
             {
               "feature": "Environmental_Concern_Level",
-              "cluster_mean": -0.063,
-              "global_mean": -0.0,
-              "z_difference": -0.063
+              "cluster_mean": 0.034,
+              "global_mean": 0.0,
+              "z_difference": 0.034
             }
           ]
         },
         {
           "cluster_id": 1,
-          "size": 465137,
-          "percentage": 69.56,
+          "size": 9171,
+          "percentage": 30.57,
           "target_mean": null,
           "target_distribution": {
-            "No": 80.51,
-            "Yes": 19.49
+            "No": 86.9,
+            "Yes": 13.1
           },
           "defining_features": [
             {
               "feature": "Home_Charging_Possible",
-              "cluster_mean": 0.655,
+              "cluster_mean": -1.495,
               "global_mean": -0.0,
-              "z_difference": 0.655
-            },
-            {
-              "feature": "City_Type",
-              "cluster_mean": -0.351,
-              "global_mean": -0.0,
-              "z_difference": -0.351
+              "z_difference": -1.495
             },
             {
               "feature": "Range_Anxiety_Level",
-              "cluster_mean": -0.312,
+              "cluster_mean": 0.701,
               "global_mean": -0.0,
-              "z_difference": -0.312
+              "z_difference": 0.701
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": 0.605,
+              "global_mean": 0.0,
+              "z_difference": 0.605
             },
             {
               "feature": "Environmental_Concern_Level",
-              "cluster_mean": 0.028,
-              "global_mean": -0.0,
-              "z_difference": 0.028
+              "cluster_mean": -0.078,
+              "global_mean": 0.0,
+              "z_difference": -0.078
             }
           ]
         }
@@ -3039,133 +3039,97 @@
       "n_clusters": 4,
       "target": "Will_Buy_EV",
       "target_type": "classification",
-      "silhouette_score": 0.1993,
-      "inertia": 3386721.84,
-      "mutual_info_with_target": 0.1112,
+      "silhouette_score": 0.1954,
+      "inertia": 153695.45,
+      "mutual_info_with_target": 0.0718,
       "clusters": [
         {
           "cluster_id": 0,
-          "size": 168200,
-          "percentage": 25.15,
+          "size": 6533,
+          "percentage": 21.78,
           "target_mean": null,
           "target_distribution": {
-            "No": 99.34,
-            "Yes": 0.66
+            "No": 83.39,
+            "Yes": 16.61
           },
           "defining_features": [
             {
-              "feature": "Subsidy_Available",
-              "cluster_mean": -1.299,
-              "global_mean": -0.0,
-              "z_difference": -1.299
-            },
-            {
               "feature": "Home_Charging_Possible",
-              "cluster_mean": 0.663,
+              "cluster_mean": -1.497,
               "global_mean": -0.0,
-              "z_difference": 0.663
+              "z_difference": -1.497
             },
             {
-              "feature": "City_Type",
-              "cluster_mean": -0.331,
-              "global_mean": -0.0,
-              "z_difference": -0.331
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": 0.794,
+              "global_mean": 0.0,
+              "z_difference": 0.794
             },
             {
               "feature": "Range_Anxiety_Level",
-              "cluster_mean": -0.307,
+              "cluster_mean": -0.349,
               "global_mean": -0.0,
-              "z_difference": -0.307
+              "z_difference": -0.349
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": -0.148,
+              "global_mean": -0.0,
+              "z_difference": -0.148
             }
           ]
         },
         {
           "cluster_id": 1,
-          "size": 143702,
-          "percentage": 21.49,
+          "size": 2762,
+          "percentage": 9.21,
           "target_mean": null,
           "target_distribution": {
-            "No": 83.6,
-            "Yes": 16.4
+            "No": 95.73,
+            "Yes": 4.27
           },
           "defining_features": [
             {
-              "feature": "Home_Charging_Possible",
-              "cluster_mean": -1.499,
-              "global_mean": -0.0,
-              "z_difference": -1.499
-            },
-            {
-              "feature": "City_Type",
-              "cluster_mean": 0.913,
-              "global_mean": -0.0,
-              "z_difference": 0.913
-            },
-            {
               "feature": "Range_Anxiety_Level",
-              "cluster_mean": -0.342,
+              "cluster_mean": 3.082,
               "global_mean": -0.0,
-              "z_difference": -0.342
+              "z_difference": 3.082
+            },
+            {
+              "feature": "Home_Charging_Possible",
+              "cluster_mean": -1.454,
+              "global_mean": -0.0,
+              "z_difference": -1.454
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": 0.568,
+              "global_mean": -0.0,
+              "z_difference": 0.568
             },
             {
               "feature": "Environmental_Concern_Level",
-              "cluster_mean": -0.032,
-              "global_mean": -0.0,
-              "z_difference": -0.032
+              "cluster_mean": -0.158,
+              "global_mean": 0.0,
+              "z_difference": -0.158
             }
           ]
         },
         {
           "cluster_id": 2,
-          "size": 62499,
-          "percentage": 9.35,
+          "size": 7577,
+          "percentage": 25.26,
           "target_mean": null,
           "target_distribution": {
-            "No": 95.83,
-            "Yes": 4.17
-          },
-          "defining_features": [
-            {
-              "feature": "Range_Anxiety_Level",
-              "cluster_mean": 3.056,
-              "global_mean": -0.0,
-              "z_difference": 3.056
-            },
-            {
-              "feature": "Home_Charging_Possible",
-              "cluster_mean": -1.459,
-              "global_mean": -0.0,
-              "z_difference": -1.459
-            },
-            {
-              "feature": "City_Type",
-              "cluster_mean": 0.492,
-              "global_mean": -0.0,
-              "z_difference": 0.492
-            },
-            {
-              "feature": "Environmental_Concern_Level",
-              "cluster_mean": -0.137,
-              "global_mean": -0.0,
-              "z_difference": -0.137
-            }
-          ]
-        },
-        {
-          "cluster_id": 3,
-          "size": 294264,
-          "percentage": 44.01,
-          "target_mean": null,
-          "target_distribution": {
-            "No": 69.58,
-            "Yes": 30.42
+            "No": 99.27,
+            "Yes": 0.73
           },
           "defining_features": [
             {
               "feature": "Subsidy_Available",
-              "cluster_mean": 0.77,
-              "global_mean": -0.0,
-              "z_difference": 0.77
+              "cluster_mean": -1.297,
+              "global_mean": 0.0,
+              "z_difference": -1.297
             },
             {
               "feature": "Home_Charging_Possible",
@@ -3174,16 +3138,52 @@
               "z_difference": 0.663
             },
             {
-              "feature": "City_Type",
-              "cluster_mean": -0.361,
+              "feature": "Range_Anxiety_Level",
+              "cluster_mean": -0.302,
               "global_mean": -0.0,
-              "z_difference": -0.361
+              "z_difference": -0.302
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.259,
+              "global_mean": 0.0,
+              "z_difference": -0.259
+            }
+          ]
+        },
+        {
+          "cluster_id": 3,
+          "size": 13128,
+          "percentage": 43.76,
+          "target_mean": null,
+          "target_distribution": {
+            "No": 69.68,
+            "Yes": 30.32
+          },
+          "defining_features": [
+            {
+              "feature": "Subsidy_Available",
+              "cluster_mean": 0.771,
+              "global_mean": 0.0,
+              "z_difference": 0.771
+            },
+            {
+              "feature": "Home_Charging_Possible",
+              "cluster_mean": 0.668,
+              "global_mean": -0.0,
+              "z_difference": 0.668
             },
             {
               "feature": "Range_Anxiety_Level",
-              "cluster_mean": -0.307,
+              "cluster_mean": -0.3,
               "global_mean": -0.0,
-              "z_difference": -0.307
+              "z_difference": -0.3
+            },
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.268,
+              "global_mean": 0.0,
+              "z_difference": -0.268
             }
           ]
         }

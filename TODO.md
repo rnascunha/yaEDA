@@ -25,7 +25,7 @@
 - Add/configure metadata:
   - Name
   - ~~Date run~~
-- Logging
+- ~~Logging~~
 - Clusters: add parameters to compare when more than one cluster (sihlouete graph)
 - Clear test warnings
 - Print trees for tree based models.

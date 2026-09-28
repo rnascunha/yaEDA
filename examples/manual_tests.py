@@ -20,7 +20,8 @@ BASE_INPUT_DIR_PATH = Path("./artifacts/data/")
 TRAIN_CSV_PATH = BASE_INPUT_DIR_PATH / "train.csv"
 TEST_CSV_PATH = BASE_INPUT_DIR_PATH / "test.csv"
 TARGET_COL = "Will_Buy_EV"
-OUTPUT_DIR = Path("./artifacts/exports/")
+# OUTPUT_DIR = Path("./artifacts/exports/")
+OUTPUT_DIR = Path(".")
 
 # If True and the files above are not found, creates synthetic sample files to run
 CREATE_SAMPLE_DATA_IF_MISSING = True
@@ -177,7 +178,9 @@ def main():
         n_clusters=[2, 4],
     )
     results.append(
-        run_setup("1. Supervised (Single Dataset)", eda_1, out_dir, "1_supervised_single")
+        run_setup(
+            "1. Supervised (Single Dataset)", eda_1, out_dir, "1_supervised_single"
+        )
     )
 
     # -------------------------------------------------------------------------
@@ -190,7 +193,12 @@ def main():
         n_clusters=[2, 4],
     )
     results.append(
-        run_setup("2. Supervised (Train vs Test Comparison)", eda_2, out_dir, "2_supervised_multi")
+        run_setup(
+            "2. Supervised (Train vs Test Comparison)",
+            eda_2,
+            out_dir,
+            "2_supervised_multi",
+        )
     )
 
     # -------------------------------------------------------------------------
@@ -203,7 +211,10 @@ def main():
     )
     results.append(
         run_setup(
-            "3. Unsupervised (Single Unlabeled Dataset)", eda_3, out_dir, "3_unsupervised_single"
+            "3. Unsupervised (Single Unlabeled Dataset)",
+            eda_3,
+            out_dir,
+            "3_unsupervised_single",
         )
     )
 
@@ -217,14 +228,21 @@ def main():
         n_clusters=[2, 3],
     )
     results.append(
-        run_setup("4. Unsupervised (Cohort A vs Cohort B)", eda_4, out_dir, "4_unsupervised_multi")
+        run_setup(
+            "4. Unsupervised (Cohort A vs Cohort B)",
+            eda_4,
+            out_dir,
+            "4_unsupervised_multi",
+        )
     )
 
     # Summary
     print("\n" + "=" * 70)
     print("Verification Completed. Summary Deliverables:")
     print("=" * 70)
-    summary_df = pd.DataFrame(results)[["setup", "html_size", "json_size", "total_time"]]
+    summary_df = pd.DataFrame(results)[
+        ["setup", "html_size", "json_size", "total_time"]
+    ]
     print(summary_df.to_string(index=False))
     print("\nGenerated files are ready in:", out_dir.resolve())
 

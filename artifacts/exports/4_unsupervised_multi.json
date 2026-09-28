@@ -1,7 +1,7 @@
 {
   "metadata": {
     "dataset_name": "Cohort_A",
-    "generated_at": "2026-09-23T17:26:02.400654",
+    "generated_at": "2026-09-28T18:01:22.768681",
     "n_rows": 668665,
     "n_columns": 14,
     "target_column": null,
@@ -2603,17 +2603,56 @@
       "n_clusters": 2,
       "target": null,
       "target_type": null,
-      "silhouette_score": 0.1412,
-      "inertia": 4626515.23,
+      "silhouette_score": 0.145,
+      "inertia": 207452.1,
       "mutual_info_with_target": null,
       "clusters": [
         {
           "cluster_id": 0,
-          "size": 429082,
-          "percentage": 64.17,
+          "size": 10777,
+          "percentage": 35.92,
           "target_mean": null,
           "target_distribution": {},
           "defining_features": [
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": 0.982,
+              "global_mean": -0.0,
+              "z_difference": 0.982
+            },
+            {
+              "feature": "Charging_Stations_Near_Work",
+              "cluster_mean": 0.979,
+              "global_mean": 0.0,
+              "z_difference": 0.979
+            },
+            {
+              "feature": "Daily_Commute_km",
+              "cluster_mean": 0.103,
+              "global_mean": -0.0,
+              "z_difference": 0.103
+            },
+            {
+              "feature": "Current_Car_Type",
+              "cluster_mean": 0.029,
+              "global_mean": 0.0,
+              "z_difference": 0.029
+            }
+          ]
+        },
+        {
+          "cluster_id": 1,
+          "size": 19223,
+          "percentage": 64.08,
+          "target_mean": null,
+          "target_distribution": {},
+          "defining_features": [
+            {
+              "feature": "Charging_Stations_Near_Home",
+              "cluster_mean": -0.55,
+              "global_mean": -0.0,
+              "z_difference": -0.55
+            },
             {
               "feature": "Charging_Stations_Near_Work",
               "cluster_mean": -0.549,
@@ -2621,55 +2660,16 @@
               "z_difference": -0.549
             },
             {
-              "feature": "Charging_Stations_Near_Home",
-              "cluster_mean": -0.547,
-              "global_mean": 0.0,
-              "z_difference": -0.547
-            },
-            {
               "feature": "Daily_Commute_km",
-              "cluster_mean": -0.047,
-              "global_mean": 0.0,
-              "z_difference": -0.047
+              "cluster_mean": -0.058,
+              "global_mean": -0.0,
+              "z_difference": -0.058
             },
             {
-              "feature": "Gender",
-              "cluster_mean": -0.012,
+              "feature": "Current_Car_Type",
+              "cluster_mean": -0.016,
               "global_mean": 0.0,
-              "z_difference": -0.012
-            }
-          ]
-        },
-        {
-          "cluster_id": 1,
-          "size": 239583,
-          "percentage": 35.83,
-          "target_mean": null,
-          "target_distribution": {},
-          "defining_features": [
-            {
-              "feature": "Charging_Stations_Near_Work",
-              "cluster_mean": 0.984,
-              "global_mean": 0.0,
-              "z_difference": 0.984
-            },
-            {
-              "feature": "Charging_Stations_Near_Home",
-              "cluster_mean": 0.98,
-              "global_mean": 0.0,
-              "z_difference": 0.98
-            },
-            {
-              "feature": "Daily_Commute_km",
-              "cluster_mean": 0.084,
-              "global_mean": 0.0,
-              "z_difference": 0.084
-            },
-            {
-              "feature": "Gender",
-              "cluster_mean": 0.021,
-              "global_mean": 0.0,
-              "z_difference": 0.021
+              "z_difference": -0.016
             }
           ]
         }
@@ -2679,106 +2679,106 @@
       "n_clusters": 3,
       "target": null,
       "target_type": null,
-      "silhouette_score": 0.1262,
-      "inertia": 4175881.53,
+      "silhouette_score": 0.1265,
+      "inertia": 187384.47,
       "mutual_info_with_target": null,
       "clusters": [
         {
           "cluster_id": 0,
-          "size": 220341,
-          "percentage": 32.95,
+          "size": 11744,
+          "percentage": 39.15,
           "target_mean": null,
           "target_distribution": {},
           "defining_features": [
             {
               "feature": "Gender",
-              "cluster_mean": -1.107,
+              "cluster_mean": 0.883,
               "global_mean": 0.0,
-              "z_difference": -1.107
+              "z_difference": 0.883
             },
             {
               "feature": "Charging_Stations_Near_Work",
-              "cluster_mean": -0.432,
+              "cluster_mean": -0.469,
               "global_mean": 0.0,
-              "z_difference": -0.432
+              "z_difference": -0.469
             },
             {
               "feature": "Charging_Stations_Near_Home",
-              "cluster_mean": -0.42,
-              "global_mean": 0.0,
-              "z_difference": -0.42
+              "cluster_mean": -0.463,
+              "global_mean": -0.0,
+              "z_difference": -0.463
             },
             {
               "feature": "Daily_Commute_km",
-              "cluster_mean": -0.047,
-              "global_mean": 0.0,
-              "z_difference": -0.047
+              "cluster_mean": -0.034,
+              "global_mean": -0.0,
+              "z_difference": -0.034
             }
           ]
         },
         {
           "cluster_id": 1,
-          "size": 183295,
-          "percentage": 27.41,
+          "size": 8427,
+          "percentage": 28.09,
           "target_mean": null,
           "target_distribution": {},
           "defining_features": [
             {
               "feature": "Charging_Stations_Near_Work",
-              "cluster_mean": 1.192,
+              "cluster_mean": 1.161,
               "global_mean": 0.0,
-              "z_difference": 1.192
+              "z_difference": 1.161
             },
             {
               "feature": "Charging_Stations_Near_Home",
-              "cluster_mean": 1.153,
-              "global_mean": 0.0,
-              "z_difference": 1.153
+              "cluster_mean": 1.149,
+              "global_mean": -0.0,
+              "z_difference": 1.149
             },
             {
               "feature": "Daily_Commute_km",
-              "cluster_mean": 0.092,
-              "global_mean": 0.0,
-              "z_difference": 0.092
+              "cluster_mean": 0.108,
+              "global_mean": -0.0,
+              "z_difference": 0.108
             },
             {
               "feature": "Gender",
-              "cluster_mean": 0.057,
+              "cluster_mean": 0.058,
               "global_mean": 0.0,
-              "z_difference": 0.057
+              "z_difference": 0.058
             }
           ]
         },
         {
           "cluster_id": 2,
-          "size": 265029,
-          "percentage": 39.64,
+          "size": 9829,
+          "percentage": 32.76,
           "target_mean": null,
           "target_distribution": {},
           "defining_features": [
             {
               "feature": "Gender",
-              "cluster_mean": 0.881,
+              "cluster_mean": -1.105,
               "global_mean": 0.0,
-              "z_difference": 0.881
+              "z_difference": -1.105
             },
             {
               "feature": "Charging_Stations_Near_Work",
-              "cluster_mean": -0.465,
+              "cluster_mean": -0.435,
               "global_mean": 0.0,
-              "z_difference": -0.465
+              "z_difference": -0.435
             },
             {
               "feature": "Charging_Stations_Near_Home",
-              "cluster_mean": -0.448,
-              "global_mean": 0.0,
-              "z_difference": -0.448
+              "cluster_mean": -0.432,
+              "global_mean": -0.0,
+              "z_difference": -0.432
             },
             {
               "feature": "Daily_Commute_km",
-              "cluster_mean": -0.025,
-              "global_mean": 0.0,
-              "z_difference": -0.025
+              "cluster_mean": -0.052,
+              "global_mean": -0.0,
+              "z_difference": -0.052
             }
           ]
         }

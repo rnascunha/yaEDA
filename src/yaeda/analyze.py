@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Literal
 import pandas as pd
+import logging
 
 from .charts import EDAChartGenerator
 from .clustering import ClusterReport, TabularClustersCall
@@ -8,7 +9,12 @@ from .correlation import CorrelationReport, FeatureTargetAnalyzer
 from .exports.export import StructuredDataExporter
 from .exports.html import EDAHTMLDashboardBuilder
 from .exports.markdown import EDAMarkdownReportBuilder
-from .extract import MultiDatasetProfiler, MultiTableProfile, TableProfile, TabularDataProfiler
+from .extract import (
+    MultiDatasetProfiler,
+    MultiTableProfile,
+    TableProfile,
+    TabularDataProfiler,
+)
 from .feature_importance import FeatureImportanceAnalyzer, FeatureImportanceReport
 from .interaction import FeatureInteractionAnalyzer, InteractionReport
 from .model_diagnostics import (
@@ -25,12 +31,16 @@ class TabularEDA:
         target: str | None = None,
         features: list[str] | None = None,
         *,
-        secondary_dfs: list[pd.DataFrame | tuple[pd.DataFrame, str]]
-        | dict[str, pd.DataFrame]
-        | None = None,
+        secondary_dfs: (
+            list[pd.DataFrame | tuple[pd.DataFrame, str]]
+            | dict[str, pd.DataFrame]
+            | None
+        ) = None,
         diagnostics: dict[str, Any] | list[dict[str, Any]] | None = None,
         target_type: Literal["classification", "regression"] | None = None,
-        model_engine: Literal["auto", "lightgbm", "extra_trees", "random_forest"] = "auto",
+        model_engine: Literal[
+            "auto", "lightgbm", "extra_trees", "random_forest"
+        ] = "auto",
         preset: Literal["minimal", "standard", "deep"] = "deep",
         enable_correlation: bool | None = None,
         enable_feature_importance: bool | None = None,
@@ -54,7 +64,12 @@ class TabularEDA:
         test_size: float = 0.25,
         seed: int = 42,
         n_jobs: int = -1,
+        log_level: int | str = logging.WARNING,
     ):
+        # 1. Initialize Logger
+        self.log_level = log_level
+        self.logger = self._setup_logger(log_level)
+
         # 1. Normalize Primary Dataset
         if isinstance(df, tuple):
             self._df, self._df_name = df[0], df[1]
@@ -140,7 +155,9 @@ class TabularEDA:
             enable_clustering if enable_clustering is not None else cfg["clustering"]
         )
         self.enable_interactions = (
-            enable_interactions if enable_interactions is not None else cfg["interactions"]
+            enable_interactions
+            if enable_interactions is not None
+            else cfg["interactions"]
         )
         self.enable_pdp = enable_pdp if enable_pdp is not None else cfg["pdp"]
 
@@ -159,6 +176,35 @@ class TabularEDA:
         self._cluster_report: dict[int, ClusterReport] | None = None
         self._diagnostics_report: dict[str, ModelDiagnosticsReport] | None = None
 
+        self.logger.info(
+            "Initialized TabularEDA for '%s' (rows=%d, cols=%d, target=%s, preset='%s').",
+            self._df_name,
+            len(self._df),
+            len(self._df.columns),
+            repr(self._target),
+            self.preset,
+        )
+
+    def _setup_logger(self, log_level: int | str) -> logging.Logger:
+        """Configures and returns the yaEDA namespace logger."""
+        logger = logging.getLogger("yaeda")
+        if isinstance(log_level, str):
+            level = getattr(logging, log_level.upper(), logging.WARNING)
+        else:
+            level = log_level
+        logger.setLevel(level)
+
+        if not logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(
+                logging.Formatter(
+                    "[yaEDA] %(asctime)s [%(levelname)s] %(message)s",
+                    datefmt="%H:%M:%S",
+                )
+            )
+            logger.addHandler(handler)
+        return logger
+
     @property
     def has_target(self) -> bool:
         return self._target is not None and self._target in self._df.columns
@@ -172,6 +218,7 @@ class TabularEDA:
         if self._profile is not None:
             return self._profile
 
+        self.logger.info("Computing primary table profile for '%s'...", self._df_name)
         profiler = TabularDataProfiler(
             self._df,
             target=self._target,
@@ -182,6 +229,10 @@ class TabularEDA:
             outlier_iqr_factor=self._outlier_irq_factor,
         )
         self._profile = profiler.run()
+        self.logger.info(
+            "Primary table profiling complete (%d features profiled).",
+            len(self._profile.features),
+        )
         return self._profile
 
     @property
@@ -189,6 +240,10 @@ class TabularEDA:
         if self._multi_profile is not None:
             return self._multi_profile
 
+        self.logger.info(
+            "Profiling %d secondary dataset(s) and computing distribution drift...",
+            len(self._secondary_dfs),
+        )
         profiler = MultiDatasetProfiler(
             primary_df=self._df,
             secondary_dfs=self._secondary_dfs,
@@ -198,6 +253,7 @@ class TabularEDA:
             n_jobs=self.n_jobs,
         )
         self._multi_profile = profiler.run()
+        self.logger.info("Multi-dataset profiling and drift analysis complete.")
         return self._multi_profile
 
     @property
@@ -206,6 +262,7 @@ class TabularEDA:
             return self._corr_report
 
         if not self.enable_correlation:
+            self.logger.info("Correlation analysis disabled; skipping.")
             self._corr_report = CorrelationReport(
                 target=self._target,
                 target_type=self._target_type,
@@ -216,6 +273,10 @@ class TabularEDA:
             )
             return self._corr_report
 
+        self.logger.info(
+            "Computing correlations and collinearity pairs (|r| >= %.2f)...",
+            self._collinear_threshold,
+        )
         analyzer = FeatureTargetAnalyzer(
             df=self._df,
             target=self._target,
@@ -226,6 +287,10 @@ class TabularEDA:
             random_state=self._seed,
         )
         self._corr_report = analyzer.run()
+        self.logger.info(
+            "Correlation analysis complete (%d collinear pairs flagged).",
+            len(self._corr_report.collinear_pairs),
+        )
         return self._corr_report
 
     @property
@@ -234,6 +299,10 @@ class TabularEDA:
             return self._feature_importance
 
         if not self.enable_feature_importance or not self.has_target:
+            reason = (
+                "disabled" if not self.enable_feature_importance else "target is None"
+            )
+            self.logger.info("Feature importance skipped (%s).", reason)
             self._feature_importance = FeatureImportanceReport(
                 target=self._target,
                 target_type=self._target_type,
@@ -248,6 +317,11 @@ class TabularEDA:
             )
             return self._feature_importance
 
+        self.logger.info(
+            "Computing feature importance & golden features (engine='%s', target='%s')...",
+            self.model_engine,
+            self._target,
+        )
         analyzer = FeatureImportanceAnalyzer(
             df=self._df,
             features=self._features,
@@ -262,6 +336,11 @@ class TabularEDA:
             random_state=self._seed,
         )
         self._feature_importance = analyzer.run()
+        self.logger.info(
+            "Feature importance complete (model='%s', %d features ranked).",
+            self._feature_importance.model_type,
+            len(self._feature_importance.importances),
+        )
         return self._feature_importance
 
     @property
@@ -270,9 +349,15 @@ class TabularEDA:
             return list(self._cluster_report.values())
 
         if not self.enable_clustering:
+            self.logger.info("Clustering analysis disabled; skipping.")
             return []
 
         prominent = self.select_prominent_features(top_n=8)
+        self.logger.info(
+            "Computing KMeans clustering for k=%s using features %s...",
+            self._n_clusters,
+            prominent,
+        )
         analyzer = TabularClustersCall(
             df=self._df,
             target=self._target if self.has_target else None,
@@ -289,6 +374,7 @@ class TabularEDA:
             random_state=self._seed,
         )
         self._cluster_report = analyzer.run()
+        self.logger.info("Clustering analysis complete.")
         return list(self._cluster_report.values())
 
     @property
@@ -300,6 +386,10 @@ class TabularEDA:
             return None
 
         fi = self.feature_importance
+        self.logger.info(
+            "Running model diagnostics error forensics for %d model(s)...",
+            len(self._diagnostics),
+        )
         analyzer = ModelDiagnosticsCall(
             df=self._df,
             target=self._target,
@@ -311,6 +401,7 @@ class TabularEDA:
             random_state=self._seed,
         )
         self._diagnostics_report = analyzer.run()
+        self.logger.info("Model diagnostics complete.")
         return list(self._diagnostics_report.values())
 
     def select_prominent_features(
@@ -365,7 +456,9 @@ class TabularEDA:
                 for f in aux_feats:
                     if f not in selected:
                         selected.append(f)
-                    if len(selected) >= max(top_n, len(golden_feats) + len(strong_feats) + 1):
+                    if len(selected) >= max(
+                        top_n, len(golden_feats) + len(strong_feats) + 1
+                    ):
                         break
 
             if len(selected) < top_n:
@@ -378,7 +471,9 @@ class TabularEDA:
             return selected[:top_n]
 
         # 2. Unsupervised fallback: prioritize spread and data completeness
-        candidates = [f for f in stats.features if f != self._target and f not in unhealthy]
+        candidates = [
+            f for f in stats.features if f != self._target and f not in unhealthy
+        ]
 
         def feature_spread_score(col: str) -> float:
             p = stats.features[col]
@@ -390,8 +485,11 @@ class TabularEDA:
         candidates.sort(key=feature_spread_score, reverse=True)
         return candidates[:top_n]
 
-    def interactions(self, top_n: int = 6, max_pairs: int | None = None) -> InteractionReport:
+    def interactions(
+        self, top_n: int = 6, max_pairs: int | None = None
+    ) -> InteractionReport:
         if not self.enable_interactions or not self.has_target:
+            self.logger.info("Feature interactions skipped (disabled or no target).")
             return InteractionReport(
                 target=self._target,
                 target_type=self._target_type,
@@ -400,6 +498,10 @@ class TabularEDA:
             )
 
         prominent = self.select_prominent_features(top_n=top_n, include_auxiliary=True)
+        self.logger.info(
+            "Evaluating pairwise arithmetic interactions across %d features...",
+            len(prominent),
+        )
         analyzer = FeatureInteractionAnalyzer(
             df=self._df,
             target=self._target,
@@ -414,7 +516,13 @@ class TabularEDA:
             sample_limit=self._interaction_sample_limit,
             random_state=self._seed,
         )
-        return analyzer.run()
+
+        rep = analyzer.run()
+        self.logger.info(
+            "Interaction analysis complete (%d candidate formulas evaluated).",
+            len(rep.top_interactions),
+        )
+        return rep
 
     def plot_partial_dependence(
         self,
@@ -430,6 +538,9 @@ class TabularEDA:
             return ""
 
         prominent = self.select_prominent_features(top_n=top_n)
+        self.logger.info(
+            "Generating Partial Dependence Plots (PDP) for %s...", prominent
+        )
         chart_engine = EDAChartGenerator()
         return chart_engine.plot_partial_dependence(
             model=fi.fitted_model,
@@ -446,6 +557,7 @@ class TabularEDA:
         return self.stats, self.correlation, self.feature_importance
 
     def to_markdown(self, output: Path | str | None = None) -> str:
+        self.logger.info("Building Markdown summary report...")
         stats, corr, fi = self.analyze_all()
         multi_prof = self.multi_stats if self.has_secondary else None
         md_builder = EDAMarkdownReportBuilder(
@@ -454,7 +566,10 @@ class TabularEDA:
             importance_report=fi,
             multi_profile=multi_prof,
         )
-        return md_builder.generate(output)
+        result = md_builder.generate(output)
+        if output:
+            self.logger.info("Markdown report saved to: %s", output)
+        return result
 
     def to_html(
         self,
@@ -463,10 +578,13 @@ class TabularEDA:
         top_n_interactions: int = 20,
         max_features_to_plot: int | None = None,
     ) -> str:
+        self.logger.info("Building interactive HTML dashboard...")
         stats = self.stats
         corr = self.correlation
         fi = self.feature_importance
-        prominent = self.select_prominent_features(top_n=top_n_features, include_auxiliary=True)
+        prominent = self.select_prominent_features(
+            top_n=top_n_features, include_auxiliary=True
+        )
         interaction_rep = (
             self.interactions(top_n=top_n_features, max_pairs=None)
             if self.enable_interactions
@@ -477,7 +595,9 @@ class TabularEDA:
         multi_prof = self.multi_stats if self.has_secondary else None
 
         card_limit = (
-            max_features_to_plot if max_features_to_plot is not None else self._max_features_to_plot
+            max_features_to_plot
+            if max_features_to_plot is not None
+            else self._max_features_to_plot
         )
 
         chart_engine = EDAChartGenerator()
@@ -498,13 +618,19 @@ class TabularEDA:
             enable_pdp=self.enable_pdp,
             enable_feature_importance=self.enable_feature_importance,
         )
-        return html_builder.generate(
+        html_content = html_builder.generate(
             output_path=output,
             max_interaction_cards=top_n_interactions,
             max_table_rows=top_n_interactions,
         )
+        if output:
+            self.logger.info("HTML dashboard generated and saved to: %s", output)
+        else:
+            self.logger.info("HTML dashboard generated in-memory.")
+        return html_content
 
     def to_json(self, output: Path | str | None = None) -> dict[str, Any]:
+        self.logger.info("Generating structured JSON metadata...")
         stats, corr, fi = self.analyze_all()
         cluster_rep = self.clusters if self.enable_clustering else []
         diagnostics = self.diagnostics
@@ -518,9 +644,13 @@ class TabularEDA:
             diagnostic_report=diagnostics,
             multi_profile=multi_prof,
         )
-        return json_builder.export_json(output)
+        payload = json_builder.export_json(output)
+        if output:
+            self.logger.info("JSON metadata saved to: %s", output)
+        return payload
 
     def to_csv(self, output: Path | str | None = None) -> dict[str, Any]:
+        self.logger.info("Exporting CSV tables...")
         stats, corr, fi = self.analyze_all()
         csv_builder = StructuredDataExporter(
             table_profile=stats,
@@ -528,7 +658,10 @@ class TabularEDA:
             importance_report=fi,
             cluster_report=self.clusters if self.enable_clustering else [],
         )
-        return csv_builder.export_csvs(output)
+        tables = csv_builder.export_csvs(output)
+        if output:
+            self.logger.info("CSV tables saved to directory: %s", output)
+        return tables
 
     def to_notebook(self, top_n_features: int = 6, top_n_interactions: int = 6):
         from IPython.display import display, HTML
